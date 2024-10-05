@@ -18,21 +18,21 @@ int process_line(const string& line){
 }
 
 int process_line_aux(const string& line, string::size_type i, bool increase){
-    while(0<i && i<line.size()){
+    while(0<=i && i<line.size()){
         if(isdigit(line[i])){
             return line[i] -'0';
-        } else if(i + 2 < line.size()){
+        } 
+        if(i + 2 < line.size()){
             const string& substring = line.substr(i, 3);
             if(substring=="one"){
                 return 1;
             } else if(substring=="two"){
                 return 2;
             } else if(substring=="six"){
-                return 2;
-            } else {
-                continue;
+                return 6;
             }
-        } else if(i + 3 < line.size()){
+        }
+        if(i + 3 < line.size()){
             const string& substring = line.substr(i, 4);
             if(substring=="four"){
                 return 4;
@@ -40,10 +40,9 @@ int process_line_aux(const string& line, string::size_type i, bool increase){
                 return 5;
             } else if(substring=="nine"){
                 return 9;
-            } else {
-                continue;
             }
-        } else if(i + 4 < line.size()){
+        } 
+        if(i + 4 < line.size()){
             const string& substring = line.substr(i, 5);
             if(substring=="three"){
                 return 3;
@@ -51,24 +50,21 @@ int process_line_aux(const string& line, string::size_type i, bool increase){
                 return 7;
             } else if(substring=="eight"){
                 return 8;
-            } else {
-                continue;
             }
-        } else{
-            increase?++i:--i;
-        }
+        } 
+        increase?++i:--i;
     }    
     throw std::runtime_error("No number");
 }
 
 int process_line_smart(const string& line){
     int first_digit = process_line_aux(line,0,true);
-    cout << first_digit << endl;
-    return 1;
+    int second_digit = process_line_aux(line,line.size()-1,false);
+    return first_digit*10+second_digit;
 }
 
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     string line;
     int sum = 0;
     while(file>>line){

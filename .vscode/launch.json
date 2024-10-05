@@ -24,6 +24,27 @@
                 }
             ],
             "preLaunchTask": "Build 2023/day1/main"
+        },
+        {
+            "name": "Debug 2023/day2/main",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${cwd}/2023/day2/main",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${cwd}/2023/day2",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build 2023/day2/main"
         }
     ]
 }

@@ -11,9 +11,12 @@ using std::endl;
 using std::vector;
 using std::shared_ptr;
 using std::make_shared;
+using std::max;
+using std::min;
 
+using ptr_type=shared_ptr<vector<vector<const char>>>;
 
-shared_ptr<vector<vector<const char>>> create_matrix(std::ifstream& file){
+ptr_type create_matrix(std::ifstream& file){
     string line;
     auto matrix_ptr = make_shared<vector<vector<const char>>>();
     vector<const char> vect_line;
@@ -31,10 +34,20 @@ shared_ptr<vector<vector<const char>>> create_matrix(std::ifstream& file){
     }
     return matrix_ptr;
 }
+bool check_arround(ptr_type matrix_ptr, int i, int j, int k){
+    int length=(*matrix_ptr)[0].size(),number_lines = matrix_ptr->size();
+    int i_min = max(i-1,0),i_max = min(i+1,number_lines-1),j_min = max(j-1,0),j_max = min(k+1,length-1);
+    bool include = false;
+    for(int o = i_min;o<=i_max;++o){
+        for(int p = j_min;p<=j_max;++p){
+            
+        }
+    }
+}
 
 int main(){
     std::ifstream file("input");
-    auto matrix_ptr = create_matrix(file);
+    ptr_type matrix_ptr = create_matrix(file);
     unsigned int sum = 0,j,k,n,length=(*matrix_ptr)[0].size();
     vector<const char> line;
     for(unsigned int i=0;i<matrix_ptr->size();++i){
@@ -50,6 +63,7 @@ int main(){
                 for( unsigned int l = j;l<k;++l){
                     n += (line[l]-'0')*pow(10,k-l-1);
                 }
+
                 j=k+1;
             } else{
                 ++j;

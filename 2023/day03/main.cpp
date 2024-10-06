@@ -40,13 +40,20 @@ bool check_arround(ptr_type matrix_ptr, int i, int j, int k){
     bool include = false;
     for(int o = i_min;o<=i_max;++o){
         for(int p = j_min;p<=j_max;++p){
-            
+            const char& c = (*matrix_ptr)[i][j];
+            if(!isalpha(c) && c != '.' ){
+                include = true;
+                break;
+            }
+        }
+        if(include){
+            break;
         }
     }
 }
 
 int main(){
-    std::ifstream file("input");
+    std::ifstream file("test_input");
     ptr_type matrix_ptr = create_matrix(file);
     unsigned int sum = 0,j,k,n,length=(*matrix_ptr)[0].size();
     vector<const char> line;

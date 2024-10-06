@@ -5,13 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug 2023/day03/main",
+            "name": "Debug 2023/day04/main",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${cwd}/2023/day03/main",
+            "program": "${cwd}/2023/day04/main",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "${cwd}/2023/day03",
+            "cwd": "${cwd}/2023/day04",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
@@ -23,7 +23,7 @@
                 "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build 2023/day03/main"
+            "preLaunchTask": "Build 2023/day04/main"
         }
     ]
 }

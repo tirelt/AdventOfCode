@@ -19,8 +19,8 @@ using std::make_shared;
 using std::shared_ptr;
 
 
-void get_numbers_from_line(string& line,vector<unsigned>& output){
-    unsigned int i=0,j;
+void get_numbers_from_line(string& line,vector<long long>& output){
+    unsigned long long i=0,j;
     while(i<line.size()){
         const char& c = line[i];
         if(isdigit(c)){
@@ -28,8 +28,8 @@ void get_numbers_from_line(string& line,vector<unsigned>& output){
             while(j<line.size() && isdigit(line[j])){
                 ++j;
             }       
-            unsigned int n = 0;
-            for( unsigned int l = i;l<j;++l){
+            unsigned long long n = 0;
+            for( unsigned long long l = i;l<j;++l){
                 n += (line[l]-'0')*pow(10,j-l-1);
             }
             output.push_back(n);
@@ -41,12 +41,12 @@ void get_numbers_from_line(string& line,vector<unsigned>& output){
 }
 
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     string line;
-    vector<unsigned> seeds;
-    vector<unsigned> line_numbers;
-    shared_ptr<vector<map<unsigned,unsigned>>> map_list = make_shared<vector<map<unsigned,unsigned>>>();
-    map<unsigned,unsigned> current_map;
+    vector<long long> seeds;
+    vector<long long> line_numbers;
+    shared_ptr<vector<vector<vector<long long>>>> map_list = make_shared<vector<vector<vector<long long>>>>();
+    vector<vector<long long>> current_map;
     vector<string> mapping_keyword({"seed-to-soil map:","soil-to-fertilizer map:","fertilizer-to-water map:","water-to-light map:","light-to-temperature map:","temperature-to-humidity map:","humidity-to-location map:"});
     bool bulding_map = false;
     while(getline(file,line)){
@@ -59,17 +59,35 @@ int main(){
         } else if(find(mapping_keyword.begin(),mapping_keyword.end(),line)!=mapping_keyword.end()){
             bulding_map = true;
         } else if(bulding_map){
+            line_numbers.clear();
             get_numbers_from_line(line,line_numbers);
-            for(unsigned i=0;i<line_numbers[2];++i){
-                current_map.insert({line_numbers[1]+i,line_numbers[0]+i});
-            }
+            current_map.push_back(line_numbers);
         } else if(line.substr(0,6)=="seeds:"){
             get_numbers_from_line(line,seeds);
         }else{
             continue;
         }
     }
+    if(bulding_map){
+        map_list->push_back(current_map);
+    }
+    vector<unsigned long long> mapped_values;
+    string step;
+    for(auto seed:seeds){
+        auto mapped_value = seed;
+        for(auto i = map_list->begin();i!=map_list->end();++i){
+            step = mapping_keyword[i-map_list->begin()];
+            for(auto j = i->begin();j!=i->end();++j){
+                if(mapped_value>=(*j)[1] && mapped_value<=(*j)[1]+(*j)[2]-1){
+                    mapped_value += (*j)[0]-(*j)[1];
+                    break;
+                }
+            }
+        }
+        mapped_values.push_back(mapped_value);
+    }
+    auto min_ite = std::min_element(mapped_values.begin(),mapped_values.end());
     file.close();
-    cout<< "The sum ot the points of the cards is: "<< 0 << endl; 
+    cout<< "The sum ot the points of the cards is: "<< *min_ite << endl; 
     return 0;
 }

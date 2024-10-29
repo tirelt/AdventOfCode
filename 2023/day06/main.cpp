@@ -12,36 +12,36 @@ using std::string;
 using std::istringstream;
 using std::sqrt;
 
-vector<int> process_line(string& line){
+vector<long long> process_line(string& line){
     string word;
     istringstream record(line);
-    vector<int> values;
+    vector<long long> values;
     record >> word;
     while (record >> word){
-        values.push_back(stoi(word));
+        values.push_back(stoll(word));
     }
     return values;
 }
 
 struct Race{
     Race() = default;
-    Race(const unsigned& t,const unsigned& d):time(t),distance(d){}
-    int compute_delta(){return time*time - 4 * distance;}
-    int number_of_ways();
-    unsigned int time;
-    unsigned int distance;
+    Race(const long long& t,const long long& d):time(t),distance(d){}
+    long long compute_delta(){return time*time - 4 * distance;}
+    long long number_of_ways();
+    unsigned long long time;
+    unsigned long long distance;
 };
 
-int Race::number_of_ways(){
-    int delta = this->compute_delta();
+long long Race::number_of_ways(){
+    long long delta = this->compute_delta();
     if (delta<0){
         return 0;
     } else if (delta == 0 ){
         return 1;
     } else {
-        double x_1 = (time-sqrt(delta))/2;
-        double x_2 = (time+sqrt(delta))/2;
-        int res = std::floor(x_2)-std::ceil(x_1)+1;
+        long double x_1 = (time-sqrt(delta))/2;
+        long double x_2 = (time+sqrt(delta))/2;
+        long long res = std::floor(x_2)-std::ceil(x_1)+1;
         if( std::floor(x_2) == x_2 ){
             --res;
         }
@@ -53,17 +53,17 @@ int Race::number_of_ways(){
 }
 
 int main(){
-    std::ifstream file("input");
+    std::ifstream file("input_part2");
     string line;
     Race race;
-    unsigned int res = 1;
-    vector<vector<int>> input_values;
+    unsigned long long res = 1;
+    vector<vector<long long>> input_values;
     while(getline(file,line)){
         input_values.push_back(process_line(line));
     }
     for (unsigned i = 0; i < input_values[0].size(); ++i){
         Race race(input_values[0][i],input_values[1][i]);
-        int temp = race.number_of_ways();
+        long long temp = race.number_of_ways();
         res *= temp;
         cout<<"Race: " << i << endl;
         cout<<"Number of ways: " << temp << endl;

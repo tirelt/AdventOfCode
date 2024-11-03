@@ -11,8 +11,8 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CXX) $(OBJS) -o $(TARGET)
 
-%.o: %.cpp
-	${CXX} $(DEBUG_FLAG) $(CXXFLAGS) -c $< -o $@
+%.o: %.cpp %.h
+	${CXX} $(DEBUG_FLAG) $(CXXFLAGS) -c $< -I ./ -o $@
 
 run:
 	./$(TARGET)

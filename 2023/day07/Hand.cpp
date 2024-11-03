@@ -27,23 +27,70 @@ Hand::Hand(string& s,unsigned& bid):value_string(s),bid(bid),value_vector(5,0){
     unsigned number_of_pair = 0;
     for( auto const& pair : card_count){
         //if( pair.second > value_vector[5]) value_vector[5] = pair.second;
-        switch (pair.second){
-            case 5:
-                value_vector[0]+=1;
-                break;
-            case 4:
-                value_vector[1]+=1;
-                break;
-            case 3:
-                value_vector[3]+=1;
-                break;
-            case 2:
-                value_vector[4]+=1;
-                break;
+        if (pair.first != 'J'){
+            switch (pair.second){
+                case 5:
+                    value_vector[0]+=1;
+                    break;
+                case 4:
+                    value_vector[1]+=1;
+                    break;
+                case 3:
+                    value_vector[3]+=1;
+                    break;
+                case 2:
+                    value_vector[4]+=1;
+                    break;
+            }
         }
     }
     if(value_vector[3] > 0 && value_vector[4] > 0 )
         value_vector[2]+=1;
+
+    switch (card_count['J']){
+        case 5:
+            value_vector[0]+=1; 
+            break;
+        case 4:
+            value_vector[0]+=1; 
+            break;
+        case 3:
+            if(value_vector[4]>0){
+                value_vector[0]+=1;
+                value_vector[4]-=1;
+            } else {
+                value_vector[1]+=1;
+            }
+            break;
+        case 2:
+            if(value_vector[3]>0){
+                value_vector[0]+=1;
+                value_vector[3]-=1;
+            } else if(value_vector[4]>0){
+                value_vector[1]+=1;
+                value_vector[4]-=1;
+            } else {
+                value_vector[3]+=1;
+            }
+            break;
+        case 1:
+            if(value_vector[1]>0){
+                value_vector[0]+=1;
+                value_vector[1]-=1;
+            } else if(value_vector[3]>0){
+                value_vector[1]+=1;
+                value_vector[3]-=1;
+            } else if(value_vector[4]==2){
+                value_vector[2]+=1;
+                value_vector[3]+=1;
+                value_vector[4]-=1;
+            } else if (value_vector[4]==1){
+                value_vector[3]+=1;
+                value_vector[4]-=1;
+            } else {
+                value_vector[4] +=1;
+            }
+    }
 }
 
 Hand process_line(string& line){

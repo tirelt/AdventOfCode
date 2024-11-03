@@ -3,34 +3,34 @@
 Card::Card(const char& n):name(n){
     switch (name){
         case '2':
-            value = 0;
-            break;
-        case '3':
             value = 1;
             break;
-        case '4':
+        case '3':
             value = 2;
             break;
-        case '5':
+        case '4':
             value = 3;
             break;
-        case '6':
+        case '5':
             value = 4;
             break;
-        case '7':
+        case '6':
             value = 5;
             break;
-        case '8':
+        case '7':
             value = 6;
             break;
-        case '9':
+        case '8':
             value = 7;
             break;
-        case 'T':
+        case '9':
             value = 8;
             break;
-        case 'J':
+        case 'T':
             value = 9;
+            break;
+        case 'J':
+            value = 0;
             break;
         case 'Q':
             value = 10;
@@ -45,8 +45,4 @@ Card::Card(const char& n):name(n){
 }
 
 bool operator==(const Card& c1,const Card& c2){return c1.value == c2.value;}
-bool operator!=(const Card& c1,const Card& c2){return c1.value == c2.value;} 
-bool operator<=(const Card& c1,const Card& c2){return c1.value <= c2.value;} 
-bool operator>=(const Card& c1,const Card& c2){return c1.value >= c2.value;} 
 bool operator<(const Card& c1,const Card& c2){return c1.value < c2.value;} 
-bool operator>(const Card& c1,const Card& c2){return c1.value > c2.value;} 

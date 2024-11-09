@@ -71,6 +71,6 @@ int main(){
         res += next_value(input_values);
     }
     file.close();
-    cout<< "The product of the number of ways you can beat the record is: " << res << endl; 
+    cout<< "The sum of these extrapolated values: " << res << endl; 
     return 0;
 }

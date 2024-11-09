@@ -13,9 +13,8 @@
             "stopAtEntry": false,
             "cwd": "${cwd}/2023/day09",
             "environment": [],
+            "MIMode": "lldb",
             "externalConsole": false,
-            "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/gdb",
             "setupCommands": [
                 {
                 "description": "Enable pretty-printing for gdb",

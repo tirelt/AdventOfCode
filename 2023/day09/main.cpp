@@ -48,7 +48,7 @@ long long Pyramid::next_value(){
     return new_value;
 }
 
-long long next_value(const vector<long long>& values){
+long long next_value(const vector<long long>& values, std::ofstream & output){
     Pyramid p;
     bool keep_going=true;
     unsigned i = 0;
@@ -58,19 +58,48 @@ long long next_value(const vector<long long>& values){
         keep_going = p.add_value(value)!=0;
     }
     long long ret = p.next_value();
+    output << ret << " " << values.size() << " " << p.values.size() << " " << p.values.back()[0] << endl;
     return ret;
 }
 
+long long get_next_value_part_1(const vector<long long>& values){
+    if(values.size()>0){
+        vector<long long> diff;
+        for(unsigned i = 0; i<values.size()-1; ++i){
+            diff.push_back(values[i+1]-values[i]);
+        }
+        return values.back() + get_next_value_part_1(diff);
+    } else {
+        return 0;
+    }
+}
+
+long long get_next_value_part_2(const vector<long long>& values){
+    if(values.size()>0){
+        vector<long long> diff;
+        for(unsigned i = 0; i<values.size()-1; ++i){
+            diff.push_back(values[i+1]-values[i]);
+        }
+        return values.front() - get_next_value_part_2(diff);
+    } else {
+        return 0;
+    }
+}
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
+    std::ofstream ouput("output");
     string line;
-    long long res = 0;
+    long long res_part_1 = 0;
+    long long res_part_2 = 0;
     vector<long long> input_values;
     while(getline(file,line)){
         process_line(input_values,line);
-        res += next_value(input_values);
+        //res += next_value(input_values,ouput);
+        res_part_1 += get_next_value_part_1(input_values);
+        res_part_2 += get_next_value_part_2(input_values);
     }
     file.close();
-    cout<< "The sum of these extrapolated values: " << res << endl; 
+    cout<< "Part 1: The sum of these extrapolated values: " << res_part_1 << endl; 
+    cout<< "Part 2: The sum of these extrapolated values: " << res_part_2 << endl; 
     return 0;
 }

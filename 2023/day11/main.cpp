@@ -16,11 +16,11 @@ using std::fabs;
 
 struct Galaxy{
     Galaxy() = default;
-    Galaxy(unsigned x,unsigned y):i(x),j(y),i_init(x),j_init(y){};
-    unsigned i;
-    unsigned j;
-    unsigned i_init;
-    unsigned j_init;
+    Galaxy(unsigned long x,unsigned long y):i(x),j(y),i_init(x),j_init(y){};
+    unsigned long i;
+    unsigned long j;
+    unsigned long i_init;
+    unsigned long j_init;
 };
 
 vector<char> process_line(string& line){
@@ -63,21 +63,22 @@ int main(){
             empty_columns.push_back(j);
         }
     }
+    unsigned growing_factor = 1000000;
     for(unsigned i: empty_lines){
         for(Galaxy& g :galaxies_list){
             if(g.i_init>i)
-                g.i+=1;
+                g.i+=growing_factor-1;
         }
     }
     for(unsigned j: empty_columns){
         for(Galaxy& g :galaxies_list){
             if(g.j_init>j)
-                g.j+=1;
+                g.j+=growing_factor-1;
         }
     }
     Galaxy g,h;
-    vector<vector<unsigned>> distances(galaxies_list.size(),vector<unsigned>(galaxies_list.size()));
-    unsigned dist_total = 0;
+    vector<vector<unsigned long>> distances(galaxies_list.size(),vector<unsigned long>(galaxies_list.size()));
+    unsigned long long dist_total = 0;
     for(unsigned k=0;k<galaxies_list.size();++k){
         g = galaxies_list[k];
         for(unsigned l=k+1;l<galaxies_list.size();++l){

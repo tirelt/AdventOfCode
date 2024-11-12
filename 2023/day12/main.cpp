@@ -2,132 +2,113 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <deque>
 #include <string>
 #include <algorithm>
 #include <map>
 #include <cmath>
 #include <numeric>
-#include <set>
+#include <map>
 
 using std::cout;
 using std::endl;
 using std::vector;
+using std::deque;
 using std::string;
 using std::istringstream;
 using std::accumulate;
 using std::copy;
-using std::set;
+using std::map;
 
-struct Group{
-    Group() = delete;
-    Group(bool b, unsigned s):is_broken(b),size(s){} 
-    bool is_broken;
-    unsigned size;
-};
-
-bool operator==(Group const& g,Group const& h){
-    return g.is_broken == h.is_broken && g.size == h.size;
-}
-
-bool operator!=(Group const& g,Group const& h){
-    return !operator==(g,h);
-}
-
-struct Group_Set{
-    Group_Set():group_set(){}
-    Group_Set(vector<Group> g):group_set(1,g){}
-    vector<vector<Group>> group_set;
-    bool add_groups(vector<Group> const& groups){
-        bool add = true;
-        for(vector<Group> const& g_l : group_set){
-            add = add && (g_l != groups);
-        }
-        if(add)
-            group_set.push_back(groups);
-    }
-};
-
-Group_Set add_one(vector<Group>& groups){
-    Group_Set new_groups_list;
-    vector<Group> groups_temp;
-    for(unsigned i=0;i<groups.size();++i){
-        if(!groups[i].is_broken){
-            groups_temp = groups;
-            groups_temp[i].size += 1;
-            new_groups_list.add_groups(groups_temp);
-        }
-    }
-    if(groups.front().is_broken){
-        groups_temp = groups;
-        groups_temp.emplace(groups_temp.begin(),false,1);
-        new_groups_list.add_groups(groups_temp);
-    }
-    if(groups.back().is_broken){
-        groups_temp = groups;
-        groups_temp.emplace(groups_temp.end(),false,1);
-        new_groups_list.add_groups(groups_temp);
-    }
-    return new_groups_list;
-}
-
-Group_Set add_one_to_each(Group_Set& groups_list){
-    Group_Set  new_group_list;
-    Group_Set  new_group_list_temp;
-    for(auto groups : groups_list.group_set){
-        new_group_list_temp = add_one(groups);
-        for(auto g : new_group_list_temp.group_set){
-            new_group_list.add_groups(g);
-        }
-    }
-    return new_group_list;
-}
-
-void process_line(string& line, vector<char>& status, vector<unsigned>& damaged_group,vector<Group>& groups){
+void process_line(string& line, vector<char>& status, vector<unsigned>& damaged_group,deque<vector<char>>& to_insert,map<unsigned,char>& status_to_check){
     bool has_seen_separator = false;
     status.clear();
     damaged_group.clear();
-    groups.clear();
+    to_insert.clear();
+    status_to_check.clear();
     auto ite = line.begin();
     while( *ite != ' ' ){
         status.push_back(*ite);
+        if(*ite!='?') status_to_check.insert({ite-line.begin(),*ite});
         ++ite;
     }
     ++ite;
     string sub_line(ite,line.end()),word;
-    
     istringstream record(sub_line);
+    vector<char> temp;
     while(getline(record,word,',')){
         damaged_group.push_back(stoi(word));
-        groups.emplace_back(true,damaged_group.back());
-        groups.emplace_back(false,1);
+        temp = vector<char>(damaged_group.back(),'#');
+        temp.push_back('.');
+        to_insert.push_back(temp);
     }
-    groups.pop_back();
+    to_insert.back().pop_back();
 }
 
+unsigned long long fact(unsigned n){
+    if( n ==0 || n == 1 ){
+        return 1;
+    } else {
+        return n *fact(n-1);
+    }
+}
+
+unsigned long long combin(unsigned n, unsigned k){
+    return fact(n)/(fact(k)*fact(n-k));
+}
 unsigned number_of_possibilities(vector<char>& status, vector<unsigned>& damaged_group){
-    unsigned n_min = damaged_group.size() - 1 + accumulate(damaged_group.begin(),damaged_group.end(),0);
-    unsigned ret = 1 + std::pow(damaged_group.size() + 1,status.size()-n_min);
-    return ret;
+    unsigned n = (status.size()-(accumulate(damaged_group.begin(),damaged_group.end(),0)+damaged_group.size()-1)) + damaged_group.size();
+    unsigned k = damaged_group.size();
+    return combin(n, k);
 }
-//auto cmp = [](vector<Group> a, vector<Group> b) { return a!=b; };
 
+bool check_current_status(vector<char>& current_status,map<unsigned,char>& status_to_check){
+    auto ite = status_to_check.begin();
+    while(ite != status_to_check.end() && ite->first < current_status.size() && current_status[ite->first]==ite->second){
+        ++ite;
+    }
+    return ite == status_to_check.end() || ite->first >= current_status.size();
+}
+unsigned count_possibilities(deque<vector<char>> to_insert,vector<char> current_status,unsigned number_of_extra_status, map<unsigned,char>& status_to_check, unsigned& call_counter){
+    call_counter += 1;
+    if(to_insert.size()>0){
+        unsigned sum = 0;
+        for(unsigned i = 0;i<=number_of_extra_status;++i){
+            deque<vector<char>> to_insert_bis = to_insert;
+            vector<char> current_status_bis = current_status;
+            for(unsigned j=0;j<i;++j) current_status_bis.push_back('.');
+            copy(to_insert_bis.front().begin(),to_insert_bis.front().end(),back_inserter(current_status_bis));
+            to_insert_bis.pop_front();
+            if(check_current_status(current_status_bis,status_to_check)){
+                sum += count_possibilities(to_insert_bis,current_status_bis,number_of_extra_status-i, status_to_check,call_counter);
+            }
+        }    
+        return sum;
+    } else {
+        if(number_of_extra_status){
+            for(unsigned j=0;j<number_of_extra_status;++j) current_status.push_back('.');
+        }
+        return check_current_status(current_status,status_to_check);
+    }
+}
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     std::ofstream output("output");
     string line;
     vector<char> status;
-    vector<unsigned> damaged_group; 
-    vector<Group> groups;
+    vector<unsigned> damaged_group;
+    deque<vector<char>> to_insert;
+    map<unsigned,char> status_to_check;
+    unsigned call_counter=0,number_of_extra_status,ret, sum = 0;
     while(getline(file,line)){
-        process_line(line,status,damaged_group,groups);
-        Group_Set group_set(groups);
-        unsigned n_min = damaged_group.size() - 1 + accumulate(damaged_group.begin(),damaged_group.end(),0);
-        for(unsigned i=0;i<status.size()-n_min;++i){
-            group_set = add_one_to_each(group_set);
-        }
-        output << number_of_possibilities(status, damaged_group) << endl;
+        call_counter = 0;
+        process_line(line,status,damaged_group,to_insert,status_to_check);
+        number_of_extra_status = (status.size()-(accumulate(damaged_group.begin(),damaged_group.end(),0)+damaged_group.size()-1));
+        ret = count_possibilities(to_insert,{},number_of_extra_status,status_to_check, call_counter);
+        output << number_of_possibilities(status, damaged_group)  << " " << ret << " " << call_counter << endl;
+        sum += ret;
     }
     file.close();
-    cout << "The sum of the lengths is: " << 0 << endl;
+    cout << "The sum of the counts is " << sum << endl;
     return 0;
 }

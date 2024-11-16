@@ -32,22 +32,34 @@ vector<vector<char>> build_pattern_columns(vector<vector<char>>& pattern_lines){
     return pattern_columns;
 }
 
+unsigned number_diff(vector<char> line_1,vector<char> line_2){
+    unsigned ret = 0;
+    for(unsigned i =0;i<line_1.size();++i){
+        ret += line_1[i] != line_2[i];
+    }
+    return ret;
+}
 unsigned find_symmetries(vector<vector<char>> const& pattern){
-    int i=0,j=1,k,l;
+    int i=0,j=1,k,l,n,m;
     bool symetric;
     while(j<pattern.size()){
-        if(pattern[i]==pattern[j]){
-            k=i,l=j;
+        n=number_diff(pattern[i],pattern[j]);
+        if(n<=1){
+            k=i-1,l=j+1;
             symetric = true;
             while( k>=0 && l < pattern.size() ){
-                if(pattern[k]!=pattern[l]){
+                m = number_diff(pattern[k],pattern[l]);
+                if(m+n>1){
                     symetric = false;
                     break;
+                }
+                if(m==1){
+                    n+=1;
                 }
                 --k;
                 ++l;
             }
-            if(symetric){
+            if(symetric && n == 1){
                 return i+1;
             }
         } 

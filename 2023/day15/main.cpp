@@ -41,6 +41,7 @@ unsigned long Box::power(){
     for(auto ite = lenses.begin();ite!=lenses.end();++ite){
         ret += (number+1)*(ite->focal)*counter++;
     }
+    return ret;
 }
 void Box::add_lens(Lens const& lens){
     auto ite = lenses.begin();
@@ -83,7 +84,9 @@ void process_line(string const& line, map<unsigned,Box>& boxes){
             box_ite->second.remove_lens(lens);
         }
         if(*ite=='='){
-            Lens lens(label,*++ite);
+            string focal_str(++ite,line.end());
+            int focal = stoi(focal_str);
+            Lens lens(label,focal);
             box_ite->second.add_lens(lens);
         }
     } else{
@@ -101,7 +104,7 @@ void process_line(string const& line, map<unsigned,Box>& boxes){
 }
 
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     string line;
     map<unsigned,Box> boxes;
     unsigned code;
@@ -109,8 +112,10 @@ int main(){
     while(getline(file,line,',')){
         process_line(line,boxes);
     }
+    for(auto box : boxes){
+        ret += box.second.power();
+    }
     file.close();
-    cout << "The sum of the results is " << ret << endl;
-    cout<< hash("cm") << endl;
+    cout << "The focusing power of the resulting lens configurationis " << ret << endl;
     return 0;
 }

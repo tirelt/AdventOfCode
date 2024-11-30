@@ -6,22 +6,23 @@
     "configurations": [
         {
             "name": "Debug 2023/day16/main",
-            "type": "cppdbg",
+            //"type": "cppdbg",
+            "type": "lldb",
             "request": "launch",
             "program": "${cwd}/2023/day16/main",
             "args": [],
-            "stopAtEntry": false,
+            //"stopAtEntry": false,
             "cwd": "${cwd}/2023/day16",
-            "environment": [],
-            "MIMode": "lldb",
-            "externalConsole": false,
-            "setupCommands": [
-                {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": true
-                }
-            ],
+            //"environment": [],
+            //"MIMode": "lldb",
+            //"externalConsole": false,
+            //"setupCommands": [
+            //    {
+            //    "description": "Enable pretty-printing for gdb",
+            //    "text": "-enable-pretty-printing",
+            //    "ignoreFailures": true
+            //    }
+            //],
             "preLaunchTask": "Build 2023/day16/main"
         }
     ]

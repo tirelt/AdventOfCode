@@ -3,16 +3,16 @@
 #include <vector>
 #include <list>
 #include <map>
-#include <algorithm>
-#include <utility>
+#include <set>
 
 using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
 using std::list;
-using std::pair;
 using std::map;
+using std::set;
+
 
 struct Tile{
     Tile(char const& c):tile_value(c){
@@ -32,6 +32,25 @@ struct Head{
     int i;
     int j;
     char direction;
+    unsigned hash() const{
+        unsigned ret = i*1000000+j*100;
+        switch (direction)
+        {
+            case '<':
+                ret += 1;
+                break;
+            case '^':
+                ret += 2;
+                break;
+            case 'v':
+                ret += 3;
+                break;
+            case '>':
+                ret += 4;
+                break;
+        }
+        return ret;
+    }
 };
 
 struct Beams{
@@ -170,13 +189,136 @@ vector<char> process_line(string const& line){
     return line_vect;
 }
 
+vector<vector<bool>> build_map_head(Head const& h,map<unsigned,vector<vector<bool>>>& map_head, vector<vector<char>>& tiles,set<unsigned> recursion_stack){
+    unsigned const hash = h.hash();
+    auto ite = map_head.find(hash);
+    if(ite != map_head.end()){
+        return ite->second;
+    }
+    vector<vector<bool>> energized(tiles.size(),vector<bool>(tiles[0].size(),false));
+    if (recursion_stack.find(hash) != recursion_stack.end()){
+        map_head[hash]=energized;
+        return energized;
+    }
+    int i,j;
+    switch (h.direction)
+    {
+        case '>':
+            i = h.i;
+            j = h.j+1;
+            break;
+        case '<':
+            i = h.i;
+            j = h.j-1;
+            break;
+        case '^':
+            i = h.i-1;
+            j = h.j;
+            break;
+        case 'v':
+            i = h.i+1;
+            j = h.j;
+            break;
+    }
+    list<Head> new_heads;
+    if(i>=0 && i<tiles.size() && j>=0 && j<tiles[0].size()){
+        energized[i][j]=true;
+        switch (tiles[i][j])
+        {
+            case '.':
+                new_heads.emplace_back(i,j,h.direction);
+                break;
+            case '/':
+                switch (h.direction)
+                {
+                    case '>':
+                        new_heads.emplace_back(i,j,'^');
+                        break;
+                    case '<':
+                        new_heads.emplace_back(i,j,'v');
+                        break;
+                    case '^':
+                        new_heads.emplace_back(i,j,'>');
+                        break;
+                    case 'v':
+                        new_heads.emplace_back(i,j,'<');
+                        break;
+                }
+                break;
+            case '\\':
+                switch (h.direction)
+                {
+                    case '>':
+                        new_heads.emplace_back(i,j,'v');
+                        break;
+                    case '<':
+                        new_heads.emplace_back(i,j,'^');
+                        break;
+                    case '^':
+                        new_heads.emplace_back(i,j,'<');
+                        break;
+                    case 'v':
+                        new_heads.emplace_back(i,j,'>');
+                        break;
+                }
+                break;
+            case '|':
+                switch (h.direction)
+                {
+                    case '<':
+                    case '>':
+                        new_heads.emplace_back(i,j,'v');
+                        new_heads.emplace_back(i,j,'^');
+                        break;
+                    default:
+                        new_heads.emplace_back(i,j,h.direction);
+                        break;
+                }
+                break;
+            case '-':
+                switch (h.direction)
+                {
+                    case '^':
+                    case 'v':
+                        new_heads.emplace_back(i,j,'>');
+                        new_heads.emplace_back(i,j,'<');
+                        break;
+                    default:
+                        new_heads.emplace_back(i,j,h.direction);
+                        break;
+                }
+                break;
+        }    
+        vector<vector<vector<bool>>> new_energizeds;
+        recursion_stack.insert(hash);
+        for(Head const& g:new_heads){
+            new_energizeds.push_back(build_map_head(g,map_head,tiles,recursion_stack));
+        }
+        for(unsigned k=0;k<tiles.size();++k){
+            for(unsigned l=0;l<tiles.size();++l){
+                for(vector<vector<bool>> const& e:new_energizeds){
+                    energized[k][l] = energized[k][l] || e[k][l];
+                }
+            }
+        }
+    }
+    map_head[hash]=energized;
+    return energized;
+}
 int main(){
     std::ifstream file("input");
+    // Part 1
     Beams beams(file);
     beams.initiate();
     while(beams.beam_heads.size()){
         beams.propagate();
     }
     cout << "The number of energized tiles is: " << beams.number_energized_tiles() << endl;
+    //Part 2 
+    Head h(0,-1,'>');
+    map<unsigned,vector<vector<bool>>> map_head;
+    vector<vector<char>> tiles;
+    set<unsigned> recursion_stack;
+    build_map_head(h, map_head, tiles, recursion_stack);
     return 0;
 }

@@ -72,6 +72,9 @@
         "stack": "cpp",
         "variant": "cpp",
         "unordered_set": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "chrono": "cpp",
+        "charconv": "cpp",
+        "forward_list": "cpp"
     }
 }

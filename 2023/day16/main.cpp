@@ -397,10 +397,10 @@ int main(){
     list<int> recursion_stack;
     unsigned ret; 
     unsigned temp;
-    Head h(-1,3,'v');
-    build_map_head(h, map_head, tiles, recursion_stack);
-    temp = count(map_head[h.hash()]);
-    auto cycles = get_cycles(map_head);
+    //Head h(-1,3,'v');
+    //build_map_head(h, map_head, tiles, recursion_stack);
+    //temp = count(map_head[h.hash()]);
+   // auto cycles = get_cycles(map_head);
     for(unsigned i=0;i<tiles.size();++i){
         Head h(i,-1,'>');
         build_map_head(h, map_head, tiles, recursion_stack);

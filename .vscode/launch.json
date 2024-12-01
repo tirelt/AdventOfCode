@@ -8,6 +8,7 @@
             "name": "Debug 2023/day16/main",
             //"type": "cppdbg",
             "type": "lldb",
+            "console": "integratedTerminal",
             "request": "launch",
             "program": "${cwd}/2023/day16/main",
             "args": [],
@@ -25,5 +26,6 @@
             //],
             "preLaunchTask": "Build 2023/day16/main"
         }
+
     ]
 }

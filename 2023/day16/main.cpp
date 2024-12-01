@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <set>
+#include <memory>
 
 using std::cout;
 using std::endl;
@@ -12,7 +13,8 @@ using std::vector;
 using std::list;
 using std::map;
 using std::set;
-
+using std::shared_ptr;
+using std::make_shared;
 
 struct Tile{
     Tile(char const& c):tile_value(c){
@@ -32,8 +34,8 @@ struct Head{
     int i;
     int j;
     char direction;
-    unsigned hash() const{
-        unsigned ret = i*1000000+j*100;
+    int hash() const{
+        int ret = i*1000000+j*1000;
         switch (direction)
         {
             case '<':
@@ -52,6 +54,29 @@ struct Head{
         return ret;
     }
 };
+
+Head reverse_hash(int hash){
+    int r_1 = round(float(hash)/1000000);
+    int r_2 =round(float(hash-r_1*1000000)/1000);
+    int q = hash-r_1*1000000-r_2*1000;
+    char c;
+    switch (q)
+        {
+            case 1:
+                c = '<';
+                break;
+            case 2:
+                c = '^';
+                break;
+            case 3:
+                c = 'v';
+                break;
+            case 4:
+                c = '>';
+                break;
+        }
+    return Head(r_1,r_2,c);     
+}
 
 struct Beams{
     Beams(std::ifstream& file);
@@ -82,7 +107,7 @@ Beams::Beams(std::ifstream& file){
         }
         tiles.push_back(tiles_line);
     }
-    file.close();
+    
 }
 void Beams::propagate(){
     Head h(beam_heads.front());
@@ -189,16 +214,27 @@ vector<char> process_line(string const& line){
     return line_vect;
 }
 
-vector<vector<bool>> build_map_head(Head const& h,map<unsigned,vector<vector<bool>>>& map_head, vector<vector<char>>& tiles,set<unsigned> recursion_stack){
-    unsigned const hash = h.hash();
+shared_ptr<vector<vector<bool>>> build_map_head(Head const& h,map<int,shared_ptr<vector<vector<bool>>>>& map_head, vector<vector<char>>& tiles,list<int> recursion_stack){
+    int const hash = h.hash();
+    vector<vector<bool>> energized(tiles.size(),vector<bool>(tiles[0].size(),false));
+    auto ite_recursion = find(recursion_stack.begin(), recursion_stack.end(),hash);
+    if(ite_recursion != recursion_stack.end()){
+        for(unsigned k=0;k<tiles.size();++k){
+            for(unsigned l=0;l<tiles.size();++l){
+                for(auto ite = ite_recursion; ite != recursion_stack.end();++ite){
+                    energized[k][l] = energized[k][l] || (*map_head[*ite])[k][l];
+                }
+            }
+        }
+        map_head[hash] = make_shared<vector<vector<bool>>>(energized);
+        for(auto ite = ite_recursion; ite != recursion_stack.end();++ite){
+            map_head[*ite] = map_head[hash];
+        }
+        return map_head[hash];
+    }
     auto ite = map_head.find(hash);
     if(ite != map_head.end()){
         return ite->second;
-    }
-    vector<vector<bool>> energized(tiles.size(),vector<bool>(tiles[0].size(),false));
-    if (recursion_stack.find(hash) != recursion_stack.end()){
-        map_head[hash]=energized;
-        return energized;
     }
     int i,j;
     switch (h.direction)
@@ -221,6 +257,8 @@ vector<vector<bool>> build_map_head(Head const& h,map<unsigned,vector<vector<boo
             break;
     }
     list<Head> new_heads;
+    map_head[hash] = make_shared<vector<vector<bool>>>(energized);
+    recursion_stack.push_back(hash);
     if(i>=0 && i<tiles.size() && j>=0 && j<tiles[0].size()){
         energized[i][j]=true;
         switch (tiles[i][j])
@@ -289,36 +327,108 @@ vector<vector<bool>> build_map_head(Head const& h,map<unsigned,vector<vector<boo
                 }
                 break;
         }    
-        vector<vector<vector<bool>>> new_energizeds;
-        recursion_stack.insert(hash);
+        vector<shared_ptr<vector<vector<bool>>>> new_energizeds;
         for(Head const& g:new_heads){
             new_energizeds.push_back(build_map_head(g,map_head,tiles,recursion_stack));
         }
         for(unsigned k=0;k<tiles.size();++k){
             for(unsigned l=0;l<tiles.size();++l){
-                for(vector<vector<bool>> const& e:new_energizeds){
-                    energized[k][l] = energized[k][l] || e[k][l];
+                for(shared_ptr<vector<vector<bool>>> const& e: new_energizeds){
+                    energized[k][l] = energized[k][l] || (*e)[k][l];
                 }
             }
         }
+        *map_head[hash]=energized;
     }
-    map_head[hash]=energized;
-    return energized;
+    return map_head[hash];
 }
+
+unsigned count(shared_ptr<vector<vector<bool>>> const& matrix_ptr){
+    unsigned ret = 0;
+    for(vector<bool> const & line: *matrix_ptr){
+        for(bool const& v:line){
+            if(v) ret+=1;
+        }
+    }
+    return ret;
+}
+
+map<int,std::pair<unsigned,list<Head>>> get_cycles(map<int,shared_ptr<vector<vector<bool>>>>& map_head){
+    map<int,std::pair<unsigned,list<Head>>> cycles;
+    vector<shared_ptr<vector<vector<bool>>>> known_ptrs;
+    for(auto pair:map_head){
+        auto ite = find(known_ptrs.begin(),known_ptrs.end(),pair.second);
+        if(ite!=known_ptrs.end()){
+            cycles[ite-known_ptrs.begin()].second.push_back(reverse_hash(pair.first));
+        } else{
+            cycles[ite-known_ptrs.begin()].second = {reverse_hash(pair.first)};
+            cycles[ite-known_ptrs.begin()].first = count(pair.second);
+            known_ptrs.push_back(pair.second);
+        }
+    }
+    return cycles;
+}
+
 int main(){
-    std::ifstream file("input");
+    
     // Part 1
-    Beams beams(file);
+    std::ifstream file_("input");
+    Beams beams(file_);
+    file_.close();
     beams.initiate();
     while(beams.beam_heads.size()){
         beams.propagate();
     }
-    cout << "The number of energized tiles is: " << beams.number_energized_tiles() << endl;
+    //cout << "The number of energized tiles is: " << beams.number_energized_tiles() << endl;
+    
     //Part 2 
-    Head h(0,-1,'>');
-    map<unsigned,vector<vector<bool>>> map_head;
+    std::ifstream file("test_input");
     vector<vector<char>> tiles;
-    set<unsigned> recursion_stack;
+    string line;
+    while(getline(file,line)){
+        vector<char> tiles_line;
+        for(char const& c : line){
+            tiles_line.push_back(c);
+        }
+        tiles.push_back(tiles_line);
+    }
+    file.close();
+    map<int,shared_ptr<vector<vector<bool>>>> map_head;
+    list<int> recursion_stack;
+    unsigned ret; 
+    unsigned temp;
+    Head h(-1,3,'v');
     build_map_head(h, map_head, tiles, recursion_stack);
+    temp = count(map_head[h.hash()]);
+    auto cycles = get_cycles(map_head);
+    for(unsigned i=0;i<tiles.size();++i){
+        Head h(i,-1,'>');
+        build_map_head(h, map_head, tiles, recursion_stack);
+        temp = count(map_head[h.hash()]);
+        cout << "The number of energized tiles is: " << temp << endl;
+        ret = std::max(temp,ret);
+    }
+    for(unsigned i=0;i<tiles.size();++i){
+        Head h(i,tiles[0].size(),'<');
+        build_map_head(h, map_head, tiles, recursion_stack);
+        temp = count(map_head[h.hash()]);
+        cout << "The number of energized tiles is: " << temp << endl;
+        ret = std::max(temp,ret);
+    }
+    for(unsigned i=0;i<tiles[0].size();++i){
+        Head h(-1,i,'v');
+        build_map_head(h, map_head, tiles, recursion_stack);
+        temp = count(map_head[h.hash()]);
+        cout << "The number of energized tiles is: " << temp << endl;
+        ret = std::max(temp,ret);
+    } 
+    for(unsigned i=0;i<tiles[0].size();++i){
+        Head h(tiles.size(),i,'^');
+        build_map_head(h, map_head, tiles, recursion_stack);
+        temp = count(map_head[h.hash()]);
+        cout << "The number of energized tiles is: " << temp << endl;
+        ret = std::max(temp,ret);
+    }
+    cout << "The max number of energized tiles is: " << ret << endl;
     return 0;
 }

@@ -109,13 +109,15 @@ vector<Position> Position::possible_next_positions(){
         }
         if(add){
             Position p(new_i,new_j,new_v);
-            ret.push_back(p);
+            //if(has_visited.find(p.hash())==has_visited.end()){
+                ret.push_back(p);
+            //}
         }
     }
     return ret;
 }
 
-int find_min(Position& position,vector<vector<int>>& map_temp_loss,map<int,int>& memo,int current_loss,int& loss_cap,int & counter){
+int find_min(Position& position,vector<vector<int>>& map_temp_loss,map<int,int>& memo,int current_loss,int& loss_cap,int & counter,list<int> stack){
     counter++;
     /*
     if(current_loss>loss_cap){
@@ -123,6 +125,12 @@ int find_min(Position& position,vector<vector<int>>& map_temp_loss,map<int,int>&
     }
     */
     int hash = position.hash();
+    for(auto ite = stack.begin();ite!=stack.end();++ite){
+        if(*ite==hash){
+            return loss_cap*2;
+        }
+    }
+    stack.push_back(hash);
     if(position.i==12&&position.j==12){
         auto a = 1;
     }
@@ -138,14 +146,14 @@ int find_min(Position& position,vector<vector<int>>& map_temp_loss,map<int,int>&
     vector<Position> possible = position.possible_next_positions();
     vector<int> values;
     for(auto ite = possible.begin();ite!=possible.end();++ite){
-        auto temp = find_min(*ite,map_temp_loss,memo,current_loss,loss_cap,counter);
+        auto temp = find_min(*ite,map_temp_loss,memo,current_loss,loss_cap,counter,stack);
         //if(temp>=0){
-            values.push_back(map_temp_loss[ite->i][ite->j] + temp);
+            values.push_back(temp);
         //}
     }
     auto min = std::min_element(values.begin(), values.end());
     //if(min!=values.end()){
-        memo[hash] = *min;
+        memo[hash] = map_temp_loss[position.i][position.j] + *min;
    // }
     return memo[hash];
 }
@@ -161,12 +169,15 @@ int main(){
     Position::max_i = map_temp_loss.size();
     Position::max_j = map_temp_loss[0].size();
     map<int,int> memo;
-    Position position(0,0,{'.','.','.'});
+    set<int> has_visited;
+    list<int> stack;
+    //Position position(0,1,{'>','^','<'});
     //Position position(11,12,{'<','v','>'});
-    //auto test =position.possible_next_positions();
+    //auto test =position.possible_next_positions(has_visited);
+    Position position(0,0,{'.','.','.'});
     int loss_cap = 200;
     int counter=0;
-    int ret = find_min(position, map_temp_loss, memo,0,loss_cap,counter);
+    int ret = find_min(position, map_temp_loss, memo,0,loss_cap,counter,stack);
     cout << "The total load on the north support beams is " << 0 << endl;
     return 0;
 }

@@ -1,23 +1,19 @@
 #include <fstream>
 #include <iostream>
-#include <iostream>
 #include <sstream>
 #include <vector>
 #include <string>
-#include <algorithm>
-#include <map>
 
 using std::cout;
 using std::endl;
 using std::vector;
 using std::string;
-using std::map;
-using std::sort;
 using std::istringstream;
 
-bool is_safe(vector<int>& report,unsigned tolerance){
+bool is_safe(vector<int>& report,unsigned tolerance){ //not going to work for tolerance >1
     unsigned i=0,j=1;
-    //check first if we need to exclude first value
+
+    //check if we need to exclude first value
     vector<int> diff{report[1]-report[0],report[2]-report[1],report[3]-report[2]};
     bool exclude_first = false;
     if(tolerance>0 && diff[1]>0 && diff[1]<4 && diff[2]>0 && diff[2]<4){
@@ -29,6 +25,7 @@ bool is_safe(vector<int>& report,unsigned tolerance){
         --tolerance;
         i=j++;
     }
+    //check increasing or decreasing
     int sign_diff=0;
     for(int const& d: diff){
         if(d>0)
@@ -37,6 +34,8 @@ bool is_safe(vector<int>& report,unsigned tolerance){
             --sign_diff;
     }
     bool increasing = sign_diff>=0;
+
+    // normal loop
     while(j<report.size()){
         bool fail = false;
         unsigned diff = abs(report[i]-report[j]);
@@ -76,40 +75,22 @@ bool is_safe(vector<int>& report,unsigned tolerance){
 }
 
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     string line;
     vector<int> report;
     string entry;
     unsigned res = 0;
-    unsigned res_ = 0;
-    unsigned counter = 1;
     while(getline(file,line)){
         report.clear();
         istringstream entries(line,' ');
         while (entries >> entry){
             report.push_back(stoi(entry));
         }
-        bool safe = is_safe(report,0);
-        unsigned i = 0;
-        while(i<report.size() && !safe){
-            vector<int> myVector = report;
-            myVector.erase(myVector.begin() + i);
-            safe = safe || is_safe(myVector,0);
-            ++i;
-        }
         if(is_safe(report,1)){ //tolerance=0 for part 1, tolerance=1 for part 2 
             ++res;
-        }
-        if(safe){
-            ++res_;
-        }
-        if(is_safe(report,1) != safe){
-            cout<< counter << endl;  
-        }
-        ++counter;
-        //cout<< counter++ << "  " << is_safe(report,0) << " " << is_safe(report,1) << " " << safe << endl;  
+        }  
     }
     file.close();
-    cout<< "The number of safe report is: " << res << " " << res_  << endl;  
+    cout<< "The number of safe report is: " << res << endl;  
     return 0;
 }

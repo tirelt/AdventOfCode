@@ -216,11 +216,14 @@ vector<char> process_line(string const& line){
 
 shared_ptr<vector<vector<bool>>> build_map_head(Head const& h,map<int,shared_ptr<vector<vector<bool>>>>& map_head, vector<vector<char>>& tiles,list<int> recursion_stack){
     int const hash = h.hash();
+    if(hash==1003){
+        auto test = 1;
+    }
     vector<vector<bool>> energized(tiles.size(),vector<bool>(tiles[0].size(),false));
     auto ite_recursion = find(recursion_stack.begin(), recursion_stack.end(),hash);
     if(ite_recursion != recursion_stack.end()){
         for(unsigned k=0;k<tiles.size();++k){
-            for(unsigned l=0;l<tiles.size();++l){
+            for(unsigned l=0;l<tiles[0].size();++l){
                 for(auto ite = ite_recursion; ite != recursion_stack.end();++ite){
                     energized[k][l] = energized[k][l] || (*map_head[*ite])[k][l];
                 }
@@ -260,7 +263,7 @@ shared_ptr<vector<vector<bool>>> build_map_head(Head const& h,map<int,shared_ptr
     map_head[hash] = make_shared<vector<vector<bool>>>(energized);
     recursion_stack.push_back(hash);
     if(i>=0 && i<tiles.size() && j>=0 && j<tiles[0].size()){
-        energized[i][j]=true;
+        (*map_head[hash])[i][j]=true;
         switch (tiles[i][j])
         {
             case '.':
@@ -334,11 +337,10 @@ shared_ptr<vector<vector<bool>>> build_map_head(Head const& h,map<int,shared_ptr
         for(unsigned k=0;k<tiles.size();++k){
             for(unsigned l=0;l<tiles.size();++l){
                 for(shared_ptr<vector<vector<bool>>> const& e: new_energizeds){
-                    energized[k][l] = energized[k][l] || (*e)[k][l];
+                    (*map_head[hash])[k][l] = (*map_head[hash])[k][l] || (*e)[k][l];
                 }
             }
         }
-        *map_head[hash]=energized;
     }
     return map_head[hash];
 }
@@ -382,7 +384,7 @@ int main(){
     //cout << "The number of energized tiles is: " << beams.number_energized_tiles() << endl;
     
     //Part 2 
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     vector<vector<char>> tiles;
     string line;
     while(getline(file,line)){
@@ -397,10 +399,22 @@ int main(){
     list<int> recursion_stack;
     unsigned ret; 
     unsigned temp;
-    //Head h(-1,3,'v');
-    //build_map_head(h, map_head, tiles, recursion_stack);
-    //temp = count(map_head[h.hash()]);
-   // auto cycles = get_cycles(map_head);
+    {
+    Head h(0,-1,'>');
+    build_map_head(h, map_head, tiles, recursion_stack);
+    temp = count(map_head[h.hash()]);
+    }
+    {
+    Head h(-1,3,'v');
+    build_map_head(h, map_head, tiles, recursion_stack);
+    temp = count(map_head[h.hash()]);
+    }
+    {
+    Head h(7,3,'>');
+    build_map_head(h, map_head, tiles, recursion_stack);
+    temp = count(map_head[h.hash()]);
+    }
+    auto cycles = get_cycles(map_head);
     for(unsigned i=0;i<tiles.size();++i){
         Head h(i,-1,'>');
         build_map_head(h, map_head, tiles, recursion_stack);

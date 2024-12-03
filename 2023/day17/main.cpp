@@ -133,20 +133,30 @@ void build_memo(list<Position>& queue,map<long long,int>& memo,vector<vector<int
     long long new_hash;
     long long hash;
     int current_loss;
-    int modified = false;
+    int max_value = 999999;
+    bool skip = false;
     while(queue.size()){
         counter++;
+        skip = false;
         Position p(queue.front());
         queue.pop_front();
-        if(!(p.i==p.max_i-1 && p.j==p.max_j-1)){
+        if(memo.find(new_hash) != memo.end() && memo[new_hash]>=max_value){
+            skip = true;
+        }
+        if(!(p.i==p.max_i-1 && p.j==p.max_j-1)&&!skip){
             hash = p.hash();
             list<Position> next_positions = p.possible_next_positions();
             for(Position const & new_p:next_positions){
-                new_hash = new_p.hash();
                 current_loss = map_temp_loss[new_p.i][new_p.j]+memo[hash];
+                if(new_p.i==new_p.max_i-1 && new_p.j==new_p.max_j-1){
+                    max_value = std::min(max_value,current_loss);
+                }
+                new_hash = new_p.hash();
                 if(memo.find(new_hash) == memo.end() || memo[new_hash] > current_loss){
                     memo[new_hash] = current_loss;
-                    queue.push_back(new_p);
+                    if(current_loss<max_value){
+                        queue.push_back(new_p);
+                    }
                 }
             }
         }
@@ -166,8 +176,8 @@ int main(){
 
     //part 1: (1,3)
     //part 2: (4,10)
-    Position::min_one_direction = 4;
-    Position::max_one_direction = 10; 
+    Position::min_one_direction = 1;
+    Position::max_one_direction = 3; 
     
     map<long long,int> memo;
     Position position(0,0,{'.',Position::min_one_direction});

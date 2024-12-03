@@ -140,11 +140,11 @@ void build_memo(list<Position>& queue,map<long long,int>& memo,vector<vector<int
         skip = false;
         Position p(queue.front());
         queue.pop_front();
-        if(memo.find(new_hash) != memo.end() && memo[new_hash]>=max_value){
+        hash = p.hash();
+        if(memo.find(hash) != memo.end() && memo[hash]>max_value){
             skip = true;
         }
         if(!(p.i==p.max_i-1 && p.j==p.max_j-1)&&!skip){
-            hash = p.hash();
             list<Position> next_positions = p.possible_next_positions();
             for(Position const & new_p:next_positions){
                 current_loss = map_temp_loss[new_p.i][new_p.j]+memo[hash];
@@ -176,8 +176,8 @@ int main(){
 
     //part 1: (1,3)
     //part 2: (4,10)
-    Position::min_one_direction = 1;
-    Position::max_one_direction = 3; 
+    Position::min_one_direction = 4;
+    Position::max_one_direction = 10; 
     
     map<long long,int> memo;
     Position position(0,0,{'.',Position::min_one_direction});

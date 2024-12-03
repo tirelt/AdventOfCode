@@ -64,28 +64,6 @@ long long Position::hash() const {
     return ret;
 }
 
-Position reverse_hash(int hash) {
-    int i = round(float(hash)/100000000);
-    int j = round(float(hash-i*100000000)/10000);
-    int directions=hash-i*100000000-j*10000;
-    if(directions%1000){
-        Position p(i,j,{'^',directions%1000});
-        return p;
-    } else if(directions%100){
-        Position p(i,j,{'<',directions%100});
-        return p;
-    } else if(directions%10){
-        Position p(i,j,{'v',directions%10});
-        return p;
-    } else if(directions>0){
-        Position p(i,j,{'>',directions});
-        return p;
-    } else{
-        Position p(i,j,{'.',1});
-        return p;
-    }
-}
-
 char opposite_direction(char const& c){
     switch (c)
     {
@@ -100,6 +78,7 @@ char opposite_direction(char const& c){
     }
     return '.';
 }
+
 list<Position> Position::possible_next_positions(){
     vector<char> possible{'>','v','<','^'};
     list<Position> ret;
@@ -141,47 +120,6 @@ list<Position> Position::possible_next_positions(){
         }
     }
     return ret;
-}
-
-void find_min(list<Position>& queue,set<int>& seen,vector<vector<int>>& map_temp_loss,map<int,int>& memo,int & counter){
-    counter++;
-    if(!queue.size()){
-        return;
-    }
-    Position position(queue.front());
-    queue.pop_front();
-    int hash = position.hash();
-    seen.insert(position.hash());
-    
-    bool end = false;
-    if(position.i==position.max_i-1 && position.j==position.max_j-1){
-        memo[hash]=0;
-        end = true;
-    }
-    list<Position> next_positions = position.possible_next_positions();
-    list<Position> real_next_positions;
-    for(Position const& p:next_positions){
-        auto ret = seen.insert(p.hash());
-        if(ret.second && !end){
-            queue.push_back(p);
-            real_next_positions.push_back(p);
-        }
-    }
-    find_min(queue, seen,map_temp_loss,memo,counter);
-    if(end){
-        return;
-    }
-    vector<int> values;
-    for(auto ite = real_next_positions.begin();ite!=real_next_positions.end();++ite){
-        values.push_back(memo[ite->hash()]+map_temp_loss[ite->i][ite->j]);
-    }
-    auto min = std::min_element(values.begin(), values.end());
-    if(min!=values.end()){
-        memo[hash] =  *min;
-    } else{
-        memo[hash] = 99999999;
-    }
-    return;
 }
 
 void build_memo(list<Position>& queue,map<long long,int>& memo,vector<vector<int>>& map_temp_loss, int& counter){

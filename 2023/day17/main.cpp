@@ -33,6 +33,8 @@ struct Position{
     int j;
     static int max_i;
     static int max_j;
+    static int max_one_direction;
+    static int min_one_direction;
     pair<char,unsigned> last_moves;
     long long hash() const;
     list<Position> possible_next_positions();
@@ -40,27 +42,29 @@ struct Position{
 
 int Position::max_i;
 int Position::max_j;
+int Position::max_one_direction;
+int Position::min_one_direction;
 
 long long Position::hash() const {
     int directions=0;
     switch (last_moves.first)
     {
         case '>':
-            directions += 1;
+            directions += 100;
             break;
         case 'v':
-            directions +=10;
+            directions += 200;
             break;
         case '<':
-            directions +=100;
+            directions += 300;
             break;
         case '^':
-            directions +=1000;
+            directions += 400;
             break;
     }
-    long long ret = i;
-    ret *= 100000000;
-    ret += j*10000 + directions*last_moves.second;
+    long long ret = i*1000000;
+    ret += j*1000; 
+    ret += directions + last_moves.second;
     return ret;
 }
 
@@ -83,7 +87,10 @@ list<Position> Position::possible_next_positions(){
     vector<char> possible{'>','v','<','^'};
     list<Position> ret;
     int new_i,new_j;
-    bool add;
+    int shift;
+    if(last_moves.second<min_one_direction){
+        possible = {last_moves.first};
+    }
     for(char const& c: possible){
         unsigned number;
         if(c==last_moves.first){
@@ -91,28 +98,28 @@ list<Position> Position::possible_next_positions(){
         } else{
             number = 1;
         }
-        if(number<=3 && c != opposite_direction(last_moves.first)){
+        if(number<= max_one_direction && c != opposite_direction(last_moves.first)){
             pair<char,unsigned> new_v{c,number};
-            add = false;
+            shift = c==last_moves.first?1:min_one_direction;
             switch (c)
             {
                 case '>':
-                    if(max_j>this->j+1){
+                    if(max_j>j+shift){
                         ret.emplace_back(i,j+1,new_v);
                     }
                     break;
                 case 'v':
-                    if(max_i>this->i+1){
+                    if(max_i>i+shift){
                         ret.emplace_back(i+1,j,new_v);
                     }
                     break;
                 case '<':
-                    if(0<=this->j-1){
+                    if(0<=j-shift){
                         ret.emplace_back(i,j-1,new_v);
                     }
                     break;
                 case '^':
-                    if(0<=this->i-1){
+                    if(0<=i-shift){
                         ret.emplace_back(i-1,j,new_v);
                     }
                     break;
@@ -156,14 +163,21 @@ int main(){
     file.close();
     Position::max_i = map_temp_loss.size();
     Position::max_j = map_temp_loss[0].size();
+
+    //part 1: (1,3)
+    //part 2: (4,10)
+    Position::min_one_direction = 4;
+    Position::max_one_direction = 10; 
+    
     map<long long,int> memo;
-    Position position(0,0,{'.',1});
+    Position position(0,0,{'.',Position::min_one_direction});
     Position last(position.max_i-1,position.max_j-1,{'.',1});
     long long last_hash(last.hash());
     int counter=0;
     list<Position> queue{position};
     build_memo(queue,memo,map_temp_loss,counter);
     int ret = 999999;
+    
     for(auto pair:memo){
         if(pair.first>=last_hash){
             ret = std::min(ret,pair.second);

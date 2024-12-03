@@ -79,18 +79,23 @@ int main(){
     string line;
     vector<int> report;
     string entry;
-    unsigned res = 0;
+    unsigned res_1 = 0;
+    unsigned res_2 = 0;
     while(getline(file,line)){
         report.clear();
         istringstream entries(line,' ');
         while (entries >> entry){
             report.push_back(stoi(entry));
         }
+        if(is_safe(report,0)){ //tolerance=0 for part 1, tolerance=1 for part 2 
+            ++res_1;
+        }  
         if(is_safe(report,1)){ //tolerance=0 for part 1, tolerance=1 for part 2 
-            ++res;
+            ++res_2;
         }  
     }
     file.close();
-    cout<< "The number of safe report is: " << res << endl;  
+    cout<< "Part 1: " << res_1 << endl;  
+    cout<< "Part 2: " << res_2 << endl;  
     return 0;
 }

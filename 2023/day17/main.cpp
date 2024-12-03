@@ -34,31 +34,56 @@ struct Position{
     static int max_i;
     static int max_j;
     pair<char,unsigned> last_moves;
-    int hash();
+    long long hash() const;
     list<Position> possible_next_positions();
 };
 
 int Position::max_i;
 int Position::max_j;
 
-int Position::hash(){
-    int directions;
+long long Position::hash() const {
+    int directions=0;
     switch (last_moves.first)
     {
         case '>':
-            directions = 1;
+            directions += 1;
             break;
         case 'v':
-            directions =10;
+            directions +=10;
             break;
         case '<':
-            directions =100;
+            directions +=100;
             break;
         case '^':
-            directions =1000;
+            directions +=1000;
             break;
     }
-    return i*100000000 + j*10000 + directions*last_moves.second;
+    long long ret = i;
+    ret *= 100000000;
+    ret += j*10000 + directions*last_moves.second;
+    return ret;
+}
+
+Position reverse_hash(int hash) {
+    int i = round(float(hash)/100000000);
+    int j = round(float(hash-i*100000000)/10000);
+    int directions=hash-i*100000000-j*10000;
+    if(directions%1000){
+        Position p(i,j,{'^',directions%1000});
+        return p;
+    } else if(directions%100){
+        Position p(i,j,{'<',directions%100});
+        return p;
+    } else if(directions%10){
+        Position p(i,j,{'v',directions%10});
+        return p;
+    } else if(directions>0){
+        Position p(i,j,{'>',directions});
+        return p;
+    } else{
+        Position p(i,j,{'.',1});
+        return p;
+    }
 }
 
 char opposite_direction(char const& c){
@@ -118,28 +143,37 @@ list<Position> Position::possible_next_positions(){
     return ret;
 }
 
-int find_min(Position& position,list<Position> queue,vector<vector<int>>& map_temp_loss,map<int,int>& memo,int & counter,list<int> stack){
+void find_min(list<Position>& queue,set<int>& seen,vector<vector<int>>& map_temp_loss,map<int,int>& memo,int & counter){
     counter++;
+    if(!queue.size()){
+        return;
+    }
+    Position position(queue.front());
+    queue.pop_front();
     int hash = position.hash();
-    stack.push_back(hash);
-    if(position.i==12&&position.j==12){
-        auto a = 1;
-    }
-    if(memo.find(hash)!=memo.end()){
-        return memo[hash];
-    }
+    seen.insert(position.hash());
+    
+    bool end = false;
     if(position.i==position.max_i-1 && position.j==position.max_j-1){
         memo[hash]=0;
-        return 0;
+        end = true;
     }
     list<Position> next_positions = position.possible_next_positions();
-    queue.splice(queue.end(),next_positions);
-    for(auto ite = queue.begin();ite!=queue.end();++ite){
-        auto temp = find_min(*ite,queue, map_temp_loss,memo,counter,stack);
+    list<Position> real_next_positions;
+    for(Position const& p:next_positions){
+        auto ret = seen.insert(p.hash());
+        if(ret.second && !end){
+            queue.push_back(p);
+            real_next_positions.push_back(p);
+        }
+    }
+    find_min(queue, seen,map_temp_loss,memo,counter);
+    if(end){
+        return;
     }
     vector<int> values;
-    for(auto ite = next_positions.begin();ite!=next_positions.end();++ite){
-        values.push_back(memo[hash]+map_temp_loss[ite->i][ite->j]);
+    for(auto ite = real_next_positions.begin();ite!=real_next_positions.end();++ite){
+        values.push_back(memo[ite->hash()]+map_temp_loss[ite->i][ite->j]);
     }
     auto min = std::min_element(values.begin(), values.end());
     if(min!=values.end()){
@@ -147,11 +181,35 @@ int find_min(Position& position,list<Position> queue,vector<vector<int>>& map_te
     } else{
         memo[hash] = 99999999;
     }
-    return memo[hash];
+    return;
 }
 
+void build_memo(list<Position>& queue,map<long long,int>& memo,vector<vector<int>>& map_temp_loss, int& counter){
+    long long new_hash;
+    long long hash;
+    int current_loss;
+    int modified = false;
+    while(queue.size()){
+        counter++;
+        Position p(queue.front());
+        queue.pop_front();
+        if(!(p.i==p.max_i-1 && p.j==p.max_j-1)){
+            hash = p.hash();
+            list<Position> next_positions = p.possible_next_positions();
+            for(Position const & new_p:next_positions){
+                new_hash = new_p.hash();
+                current_loss = map_temp_loss[new_p.i][new_p.j]+memo[hash];
+                if(memo.find(new_hash) == memo.end() || memo[new_hash] > current_loss){
+                    memo[new_hash] = current_loss;
+                    queue.push_back(new_p);
+                }
+            }
+        }
+    }
+    return;
+}
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     string line;
     vector<vector<int>> map_temp_loss;
     while(getline(file,line)){
@@ -160,17 +218,19 @@ int main(){
     file.close();
     Position::max_i = map_temp_loss.size();
     Position::max_j = map_temp_loss[0].size();
-    map<int,int> memo;
-    set<int> has_visited;
-    list<int> stack;
-    //Position position(0,1,{'>','^','<'});
-    //Position position(11,12,{'<','v','>'});
-    //auto test =position.possible_next_positions(has_visited);
+    map<long long,int> memo;
     Position position(0,0,{'.',1});
-    int loss_cap = 200;
+    Position last(position.max_i-1,position.max_j-1,{'.',1});
+    long long last_hash(last.hash());
     int counter=0;
-    list<Position> queue;
-    int ret = find_min(position, queue, map_temp_loss, memo,counter,stack);
-    cout << "The total load on the north support beams is " << 0 << endl;
+    list<Position> queue{position};
+    build_memo(queue,memo,map_temp_loss,counter);
+    int ret = 999999;
+    for(auto pair:memo){
+        if(pair.first>=last_hash){
+            ret = std::min(ret,pair.second);
+        }
+    }
+    cout << "The least heat loss it can incur is " << ret << endl;
     return 0;
 }

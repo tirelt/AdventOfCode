@@ -41,29 +41,22 @@ bool check_order(map<int,pair<set<int>,set<int>>>& ordering, vector<int>& values
     return true; 
 }
 
- vector<int> sort_values(map<int,pair<set<int>,set<int>>>& ordering, vector<int>& values){
-    set<int> right_set;
+ int mid_value(map<int,pair<set<int>,set<int>>>& ordering, vector<int>& values){
+    map<int,int> smaller_then;
     for(const int& el:values){
-        for(const int& i:ordering[el].second){
-            right_set.insert(i);
-        }
-    }
-    vector<int> sorted_values;
-    set<int> result;
-    while(sorted_values.size()<values.size()){
-        for(const int& el:values){
-            result.clear();
-            set_intersection(ordering[el].first.begin(),ordering[el].first.end(),right_set.begin(),right_set.end(),inserter(result, result.begin()));
-            if(!result.size()){
-                sorted_values.push_back(el);
-                break;
+        for(const int& v:values){
+            if(ordering[v].first.find(el)!=ordering[v].first.end()){
+                ++smaller_then[el];
             }
         }
-        for(const int& el:ordering[sorted_values.back()].second){
-            left_set.insert(el);
-        }
-
     }
+    int ret;
+    for(const pair<int,int>& p:smaller_then){
+        if(p.second==values.size()/2){
+            ret = p.first;
+        }
+    }
+    return ret;
 }
 int main(){
     std::ifstream file("input");
@@ -86,6 +79,8 @@ int main(){
             }
             if(check_order(ordering, values)){
                 ret_1 += values[values.size()/2];
+            } else{
+                ret_2 += mid_value(ordering, values);
             }
         }
         if(line=="")

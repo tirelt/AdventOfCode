@@ -5,15 +5,15 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug 2024/day04/main",
+            "name": "Debug 2024/day05/main",
             //"type": "cppdbg",
             "type": "lldb",
             "console": "integratedTerminal",
             "request": "launch",
-            "program": "${cwd}/2024/day04/main",
+            "program": "${cwd}/2024/day05/main",
             "args": [],
             //"stopAtEntry": false,
-            "cwd": "${cwd}/2024/day04",
+            "cwd": "${cwd}/2024/day05",
             //"environment": [],
             //"MIMode": "lldb",
             //"externalConsole": false,
@@ -24,7 +24,7 @@
             //    "ignoreFailures": true
             //    }
             //],
-            "preLaunchTask": "Build 2024/day04/main"
+            "preLaunchTask": "Build 2024/day05/main"
         }
 
     ]

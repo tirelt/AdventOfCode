@@ -1,5 +1,3 @@
-
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -8,7 +6,6 @@
 #include <utility>
 #include <map>
 #include <vector>
-#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -17,31 +14,8 @@ using std::map;
 using std::set;
 using std::pair;
 using std::vector;
-using std::set_intersection;
-using std::set_union;
 
-bool check_order(map<int,pair<set<int>,set<int>>>& ordering, vector<int>& values){
-    set<int> left_set;
-    set<int> right_set(values.begin(),values.end());
-    set<int> result;
-    for(const int& el:values){
-        result.clear();
-        set_intersection(ordering[el].first.begin(),ordering[el].first.end(),right_set.begin(),right_set.end(),inserter(result, result.begin()));
-        if(result.size()){
-            return false;
-        }
-        result.clear();
-        set_intersection(ordering[el].second.begin(),ordering[el].second.end(),left_set.begin(),left_set.end(),inserter(result, result.begin()));
-        if(result.size()){
-            return false;
-        }
-        right_set.erase(el);
-        left_set.insert(el);
-    }   
-    return true; 
-}
-
- int mid_value(map<int,pair<set<int>,set<int>>>& ordering, vector<int>& values){
+bool check_order_and_find_mid(map<int,pair<set<int>,set<int>>>& ordering, vector<int>& values, int& mid){
     map<int,int> smaller_then;
     for(const int& el:values){
         for(const int& v:values){
@@ -50,14 +24,21 @@ bool check_order(map<int,pair<set<int>,set<int>>>& ordering, vector<int>& values
             }
         }
     }
-    int ret;
     for(const pair<int,int>& p:smaller_then){
         if(p.second==values.size()/2){
-            ret = p.first;
+            mid = p.first;
         }
     }
-    return ret;
+    int el;
+    for(int i=0; i<values.size();++i){
+        el = values[i];
+        if( smaller_then[el] != values.size() -(i+1)){
+            return false;
+        }
+    }
+    return true; 
 }
+
 int main(){
     std::ifstream file("input");
     string line;
@@ -70,6 +51,7 @@ int main(){
     int left_int;
     int right_int;
     vector<int> values;
+    int mid;
     while(getline(file,line)){
         if(seen_space){
             std::istringstream stream(line);
@@ -77,10 +59,10 @@ int main(){
             while(getline(stream,left,',')){
                 values.push_back(stoi(left));
             }
-            if(check_order(ordering, values)){
-                ret_1 += values[values.size()/2];
+            if(check_order_and_find_mid(ordering, values,mid)){
+                ret_1 += mid;
             } else{
-                ret_2 += mid_value(ordering, values);
+                ret_2 += mid;
             }
         }
         if(line=="")

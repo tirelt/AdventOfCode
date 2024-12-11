@@ -7,10 +7,11 @@
 using std::cout;
 using std::endl;
 using std::string;
+using std::to_string;
 using std::list;
 using std::stringstream;
 
-bool check_if_possible(long long & target,long long  current_number, list<long long> numbers){
+bool part_1(long long & target,long long  current_number, list<long long> numbers){
     if(current_number>target){
         return false;
     }
@@ -19,8 +20,21 @@ bool check_if_possible(long long & target,long long  current_number, list<long l
     }
     long long front = numbers.front();
     numbers.pop_front();
-    return check_if_possible(target,current_number+front,numbers) || check_if_possible(target,(current_number?current_number:1)*front,numbers);
+    return part_1(target,current_number+front,numbers) || (current_number?part_1(target,current_number*front,numbers):false);
 }
+
+bool part_2(long long & target,long long  current_number, list<long long> numbers){
+    if(current_number>target){
+        return false;
+    }
+    if(!numbers.size()){
+        return target==current_number;
+    }
+    long long front = numbers.front();
+    numbers.pop_front();
+    return part_2(target,stoll(to_string(current_number)+to_string(front)),numbers)||part_2(target,current_number+front,numbers)||(current_number?part_2(target,current_number*front,numbers):false);
+}
+
 int main(){
     std::ifstream file("input");
     string line;
@@ -39,8 +53,11 @@ int main(){
         while(ss>>sub_line){
             numbers.push_back(stoll(sub_line));
         }
-        if(check_if_possible(target,0, numbers)){
+        if(part_1(target,0, numbers)){
             ret_1 += target;
+        }
+        if(part_2(target,0, numbers)){
+            ret_2 += target;
         }
     }
     cout << "Part 1: " << ret_1 << endl; 

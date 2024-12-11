@@ -11,28 +11,36 @@ using std::to_string;
 using std::list;
 using std::stringstream;
 
-bool part_1(long long & target,long long  current_number, list<long long> numbers){
+bool part_1(long long & target,long long  current_number, list<long long>& numbers,list<long long >::iterator ite){
     if(current_number>target){
         return false;
     }
-    if(!numbers.size()){
+    if(ite==numbers.end()){
         return target==current_number;
     }
-    long long front = numbers.front();
-    numbers.pop_front();
-    return part_1(target,current_number+front,numbers) || (current_number?part_1(target,current_number*front,numbers):false);
+    long long front = *ite;
+    list<long long >::iterator next_ite = std::next(ite);
+    return part_1(target,current_number+front,numbers, next_ite)||(current_number?part_1(target,current_number*front,numbers,next_ite):false);
 }
 
-bool part_2(long long & target,long long  current_number, list<long long> numbers){
+long long concat_numbers(long long a, long long b){ 
+    long long multiplier = 1; 
+    while (b >= multiplier){
+        multiplier *= 10;
+    } 
+    return a * multiplier + b; 
+}
+
+bool part_2(long long const & target,long long  current_number, list<long long> const& numbers, list<long long >::iterator ite){
     if(current_number>target){
         return false;
     }
-    if(!numbers.size()){
+    if(ite==numbers.end()){
         return target==current_number;
     }
-    long long front = numbers.front();
-    numbers.pop_front();
-    return part_2(target,stoll(to_string(current_number)+to_string(front)),numbers)||part_2(target,current_number+front,numbers)||(current_number?part_2(target,current_number*front,numbers):false);
+    long long front = *ite;
+    list<long long >::iterator next_ite = std::next(ite);
+    return part_2(target,concat_numbers(current_number,front),numbers, next_ite)||part_2(target,current_number+front,numbers, next_ite)||(current_number?part_2(target,current_number*front,numbers,next_ite):false);
 }
 
 int main(){
@@ -53,10 +61,10 @@ int main(){
         while(ss>>sub_line){
             numbers.push_back(stoll(sub_line));
         }
-        if(part_1(target,0, numbers)){
+        if(part_1(target,0, numbers,numbers.begin())){
             ret_1 += target;
         }
-        if(part_2(target,0, numbers)){
+        if(part_2(target,0, numbers,numbers.begin())){
             ret_2 += target;
         }
     }

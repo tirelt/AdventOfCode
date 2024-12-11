@@ -42,7 +42,7 @@ int main(){
         ++i;
     }
     int new_i,new_j,d_i,d_j;
-    for(auto p:antennas){
+    for(const auto& p:antennas){
         for(size_t k=0;k<p.second.size();++k){
             for(size_t l=k+1;l<p.second.size();++l){
                 d_i = p.second[k].first-p.second[l].first;
@@ -69,7 +69,7 @@ int main(){
             loc.is_antinode=false;
         }
     }
-    for(auto p:antennas){
+    for(const auto&  p:antennas){
         for(size_t k=0;k<p.second.size();++k){
             if(!locations[p.second[k].first][p.second[k].second].is_antinode){
                 locations[p.second[k].first][p.second[k].second].is_antinode = true;

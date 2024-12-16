@@ -1,10 +1,10 @@
 # Advent Of Code
 
-Trying to solve [Advent Of Code](https://adventofcode.com/2023/) problems in C++ 
+Solving [Advent Of Code](https://adventofcode.com/2023/) problems in C++.
 
 # Usage
 
-Use the 'makefile' in the problem subfolders.
+Use the `makefile` in the problem subfolders.
 e.g.
 ```bash
 make #to build the project
@@ -29,24 +29,19 @@ Using `VSCode` change `.vscode/tasks.json` and `.vscode/launch.json` as per belo
 ```
 ```bash
 {
-    "name": "Debug [path_to_folder]/main",
-    "type": "cppdbg",
-    "request": "launch",
-    "program": "${cwd}/[path_to_folder]/main",
-    "args": [],
-    "stopAtEntry": false,
-    "cwd": "${cwd}/[path_to_folder]",
-    "environment": [],
-    "externalConsole": false,
-    "MIMode": "gdb",
-    "miDebuggerPath": "/usr/bin/gdb",
-    "setupCommands": [
+    "version": "0.2.0",
+    "configurations": [
         {
-        "description": "Enable pretty-printing for gdb",
-        "text": "-enable-pretty-printing",
-        "ignoreFailures": true
+            "name": "Debug 2024/day12/main",
+            "type": "lldb",
+            "console": "integratedTerminal",
+            "request": "launch",
+            "program": "${cwd}/2024/day12/main",
+            "args": [],
+            "cwd": "${cwd}/2024/day12",
+            "preLaunchTask": "Build 2024/day12/main"
         }
-    ],
-    "preLaunchTask": "Build [path_to_folder]/main"
+
+    ]
 }
 ```

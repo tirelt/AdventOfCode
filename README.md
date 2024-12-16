@@ -18,13 +18,13 @@ Using `VSCode` change `.vscode/tasks.json` and `.vscode/launch.json` as per belo
 ```bash
 {
     "type": "cppbuild",
-    "label": "Build [path_to_folder]/main",
+    "label": "Build [year]/[day]/main",
     "command": "make",
     "args": ["main"],
     "options": {
-        "cwd": "${cwd}/[path_to_folder]"
+        "cwd": "${cwd}/[year]/[day]"
     },
-    "detail": "Build [path_to_folder]/main"
+    "detail": "Build [year]/[day]/main"
 }
 ```
 ```bash
@@ -32,14 +32,14 @@ Using `VSCode` change `.vscode/tasks.json` and `.vscode/launch.json` as per belo
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug 2024/day12/main",
+            "name": "Debug [year]/[day]/main",
             "type": "lldb",
             "console": "integratedTerminal",
             "request": "launch",
-            "program": "${cwd}/2024/day12/main",
+            "program": "${cwd}/[year]/[day]/main",
             "args": [],
-            "cwd": "${cwd}/2024/day12",
-            "preLaunchTask": "Build 2024/day12/main"
+            "cwd": "${cwd}/[year]/[day]",
+            "preLaunchTask": "Build [year]/[day]/main"
         }
 
     ]

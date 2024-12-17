@@ -75,6 +75,7 @@
         "list": "cpp",
         "chrono": "cpp",
         "charconv": "cpp",
-        "forward_list": "cpp"
+        "forward_list": "cpp",
+        "regex": "cpp"
     }
 }

@@ -77,5 +77,6 @@
         "charconv": "cpp",
         "forward_list": "cpp",
         "regex": "cpp"
-    }
+    },
+    "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }

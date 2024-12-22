@@ -5,26 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug 2024/day17/main",
+            "name": "Debug 2024/day16/main",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${cwd}/2024/day17/main",
+            "program": "${cwd}/2024/day16/main",
             "args": [],
             //"stopAtEntry": false,
-            "cwd": "${cwd}/2024/day17",
+            "cwd": "${cwd}/2024/day16",
             "MIMode": "gdb",
             "miDebuggerPath": "/usr/bin/gdb",
-            //"environment": [],
-            //"MIMode": "lldb",
-            //"externalConsole": false,
-            //"setupCommands": [
-            //    {
-            //    "description": "Enable pretty-printing for gdb",
-            //    "text": "-enable-pretty-printing",
-            //    "ignoreFailures": true
-            //    }
-            //],
-            "preLaunchTask": "Build 2024/day17/main"
+            "environment": [],
+            "externalConsole": false,
+            "setupCommands": [
+                {
+                "description": "Enable pretty-printing for gdb",
+                "text": "-enable-pretty-printing",
+                "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "Build 2024/day16/main"
         }
 
     ]

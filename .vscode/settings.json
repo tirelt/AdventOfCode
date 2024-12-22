@@ -76,7 +76,9 @@
         "chrono": "cpp",
         "charconv": "cpp",
         "forward_list": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "ranges": "cpp",
+        "cinttypes": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }

@@ -6,14 +6,14 @@
     "configurations": [
         {
             "name": "Debug 2024/day17/main",
-            //"type": "cppdbg",
-            "type": "lldb",
-            "console": "integratedTerminal",
+            "type": "cppdbg",
             "request": "launch",
             "program": "${cwd}/2024/day17/main",
             "args": [],
             //"stopAtEntry": false,
             "cwd": "${cwd}/2024/day17",
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
             //"environment": [],
             //"MIMode": "lldb",
             //"externalConsole": false,

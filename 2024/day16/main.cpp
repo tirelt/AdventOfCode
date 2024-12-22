@@ -2,11 +2,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <map>
 #include <set>
 #include <list>
-#include <stdexcept>
-#include <algorithm>
 
 using std::vector;
 using std::cout;
@@ -14,100 +11,113 @@ using std::endl;
 using std::string;
 using std::ifstream;
 using std::list;
-using std::map;
 using std::set;
-using std::pair;
 
 struct Position{
-    //Position(int a, int b, int d):x(a),y(b),dir(d){}
     int x;
     int y;
     int dir;
+    int cum_score;
+    set<int> stack;
+
     int hash() const{
         return dir*1'000'000+x*1'000+y;
     }
-    list<pair<Position,int>> next_position(const vector<vector<char>>& maze,int cum_score = 0) const {
-        list<pair<Position,int>> list_next;
-        Position temp = *this;
+    list<Position> next_position(const vector<vector<char>>& maze) const {
+        list<Position> next;
+        int new_x=x,new_y=y;
         switch (dir)
         {
         case 0: //up
-            if(x-1>=0 && maze[x-1][y]!='#')
-                temp.x-=1;
+            new_x -=1;
             break;
         case 1: //up
-            if(y+1<maze[0].size() && maze[x][y+1]!='#')
-                temp.y+=1;
+            new_y += 1;
             break;
         case 2: //up
-            if(x+1<maze.size() && maze[x+1][y]!='#')
-                temp.x+=1;
+            new_x +=1;
             break;
         case 3: //up
-            if(y-1>=0 && maze[x][y-1]!='#')
-                temp.y-=1;
+            new_y -=1;
             break;
         }
-        list_next.emplace_back(temp,cum_score+1);
-        temp = *this;
-        temp.dir = (temp.dir + 1)%4;
-        list_next.emplace_back(temp,cum_score+1000);
-        temp.dir = (temp.dir + 2)%4;
-        list_next.emplace_back(temp,cum_score+1000);
-        return list_next;
+        if(new_x>=0 && new_x <= maze.size() && new_y>=0 && new_y <= maze[0].size() && maze[new_x][new_y]!='#'){
+            Position temp = *this;
+            temp.x = new_x;
+            temp.y = new_y;
+            temp.cum_score += 1;
+            //temp.stack.insert(new_x*1'000+new_y);
+            next.push_back(temp);
+        }
+        Position temp = *this;
+        temp.cum_score += 1000;
+        temp.dir = (temp.dir + 1 )%4;
+        next.push_back(temp);
+        temp.dir = (temp.dir + 2 )%4;
+        next.push_back(temp);
+        return next;
     }
 };
 
-void build_memo(const Position& p_init, const vector<vector<char>>& maze,map<int,pair<int,set<int>>>& memo){
-    list<Position> queue{p_init};
-    int hash = p_init.hash();
-    memo[hash] = {0,{hash%1'000'000}};
-    set<int> is_in_queue{hash};
-    while(queue.size())
-    {
-        const Position& p = queue.front();
-        queue.pop_front();
-        hash = p.hash();
-        is_in_queue.erase(hash);
-        list<pair<Position,int>> new_queue = p.next_position(maze,memo[hash].first);
-        for(const auto& [new_p,new_cum_score]:new_queue){
-            int new_hash = new_p.hash();
-            if(memo.find(new_hash)==memo.end() || memo[new_hash].first > new_cum_score){
-                memo[new_hash].first = new_cum_score;
-                memo[new_hash].second = memo[hash].second;
-                if(auto ret = is_in_queue.insert(new_hash);ret.second){
-                    queue.push_back(new_p);
+void dijkstra(list<Position>& queue,const vector<vector<char>>& maze,set<int>& treated){
+    const Position p = queue.front();
+    queue.pop_front();
+    list<Position> new_queue = p.next_position(maze);
+    treated.insert(p.hash());
+    for(const auto& new_p:new_queue){
+        if(treated.find(new_p.hash())==treated.end()){
+            auto ite = queue.begin();
+            bool need_to_insert=true;
+            while(ite!=queue.end()){
+                if(ite->hash()==new_p.hash()){
+                    if( ite->cum_score > new_p.cum_score){
+                        ite = queue.erase(ite);
+                    } else{
+                        need_to_insert = false;
+                        /*
+                        if (ite->cum_score = new_p.cum_score){
+                            for(const int& h:new_p.stack){
+                                ite->stack.insert(h);
+                            }
+                        }*/
+                    }
+                    break;
                 }
-            } else if( memo[new_hash].first == new_cum_score){
-                for(const int& h:memo[hash].second){
-                    memo[new_hash].second.insert(h);
-                }
+                ++ite;
             }
-            memo[new_hash].second.insert(new_hash%1'000'000);     
-        }  
-    }   
+            if(need_to_insert){
+                auto ite = queue.begin();
+                while(ite!=queue.end() && ite->cum_score < new_p.cum_score){
+                    ++ite;
+                }
+                queue.insert(ite,new_p);
+            }
+        }
+    }
 }
-
 int main(){
     std::ifstream file("input");
     string line;
     vector<vector<char>> maze;
-    int i=0,j=0,x,y;
-    Position p,p_final;
-    map<int,pair<int,set<int>>> memo;
+    int i=0,j=0,x_final,y_final;
+    list<Position> queue;
+    Position p_init;
     while(getline(file,line)){
         vector<char> temp;
         j = 0;
         for(const char& c:line){
             temp.emplace_back(c);
             if(c=='S'){
-                p.x = i;
-                p.y = j;
-                p.dir = 1;
+                p_init.x = i;
+                p_init.y = j;
+                p_init.dir = 1;
+                p_init.cum_score = 0;
+                //p_init.stack.insert(p_init.x*1'000+p_init.y);
+                queue.push_back(p_init);
             }
             if(c=='E'){
-                p_final.x = i;
-                p_final.y = j;
+                x_final = i;
+                y_final = j;
             }
             ++j;
         }
@@ -115,17 +125,12 @@ int main(){
         ++i;
     }
     file.close();
-    set<int> queue;
-    build_memo(p,maze,memo);
-    int ret_1 = 99999999;
-    int ret_2 = 99999999;
-    for(int i=0;i<4;++i){
-        p_final.dir = i;
-        ret_1 = std::min(ret_1,memo[p_final.hash()].first);
+    set<int> treated;
+    while(queue.size() && !(queue.front().x == x_final && queue.front().y == y_final )){
+        dijkstra(queue,maze,treated);
     }
-    ret_2 = memo[p_final.hash()].second.size();
-    //ret_2 = memo[p_final.hash()].second.size();
-    cout<< "Part 1: " << ret_1 << endl;
-    cout<< "Part 2: " << ret_2 << endl;
+    
+    cout<< "Part 1: " << queue.front().cum_score << endl;
+    cout<< "Part 2: " << queue.front().stack.size() << endl;
     return 0;
 }

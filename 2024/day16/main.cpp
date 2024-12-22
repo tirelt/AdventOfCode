@@ -58,10 +58,10 @@ struct Position{
     }
 };
 
-void build_memo(const Position& p_init, const vector<vector<char>>& maze,map<int,int>& memo){
+void build_memo(const Position& p_init, const vector<vector<char>>& maze,map<int,pair<int,set<int>>>& memo){
     list<Position> queue{p_init};
     int hash = p_init.hash();
-    memo[hash] = 0;
+    memo[hash] = {0,{hash%1'000'000}};
     set<int> is_in_queue{hash};
     while(queue.size())
     {
@@ -69,25 +69,32 @@ void build_memo(const Position& p_init, const vector<vector<char>>& maze,map<int
         queue.pop_front();
         hash = p.hash();
         is_in_queue.erase(hash);
-        list<pair<Position,int>> new_queue = p.next_position(maze,memo[hash]);
+        list<pair<Position,int>> new_queue = p.next_position(maze,memo[hash].first);
         for(const auto& [new_p,new_cum_score]:new_queue){
             int new_hash = new_p.hash();
-            if(memo.find(new_hash)==memo.end() || memo[new_hash] > new_cum_score){
-                memo[new_hash] = new_cum_score;
+            if(memo.find(new_hash)==memo.end() || memo[new_hash].first > new_cum_score){
+                memo[new_hash].first = new_cum_score;
+                memo[new_hash].second = memo[hash].second;
                 if(auto ret = is_in_queue.insert(new_hash);ret.second){
                     queue.push_back(new_p);
                 }
+            } else if( memo[new_hash].first == new_cum_score){
+                for(const int& h:memo[hash].second){
+                    memo[new_hash].second.insert(h);
+                }
             }
+            memo[new_hash].second.insert(new_hash%1'000'000);     
         }  
     }   
 }
+
 int main(){
     std::ifstream file("input");
     string line;
     vector<vector<char>> maze;
     int i=0,j=0,x,y;
     Position p,p_final;
-    map<int,int> memo;
+    map<int,pair<int,set<int>>> memo;
     while(getline(file,line)){
         vector<char> temp;
         j = 0;
@@ -111,10 +118,14 @@ int main(){
     set<int> queue;
     build_memo(p,maze,memo);
     int ret_1 = 99999999;
+    int ret_2 = 99999999;
     for(int i=0;i<4;++i){
         p_final.dir = i;
-        ret_1 = std::min(ret_1,memo[p_final.hash()]);
+        ret_1 = std::min(ret_1,memo[p_final.hash()].first);
     }
+    ret_2 = memo[p_final.hash()].second.size();
+    //ret_2 = memo[p_final.hash()].second.size();
     cout<< "Part 1: " << ret_1 << endl;
+    cout<< "Part 2: " << ret_2 << endl;
     return 0;
 }

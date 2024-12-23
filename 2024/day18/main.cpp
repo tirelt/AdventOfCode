@@ -31,6 +31,34 @@ bool can_add(int x,int y, int depth, vector<vector<Space>>& memory){
     return false;
 }
 
+bool reached(int x,int y, vector<vector<Space>>& memory){
+    if(x>=0 && x < memory[0].size() && y>=0 && y < memory.size()){
+        if(memory[y][x].visited){
+            return true;
+        }
+    }
+    return false;
+}
+
+void print(vector<vector<Space>>& memory){
+    string temp = "";
+    std::ofstream out("output");
+    for(vector<Space>& line:memory){
+        temp.clear();
+        for(Space& s:line){
+            if(s.blocked){
+                temp.push_back('#');
+            } else if(s.visited){
+                temp.push_back('0');
+            } else{
+                temp.push_back('.');
+            }
+        }
+        out << temp << "\n";
+    }
+    out.flush();
+}
+
 void breadth_search(list<pair<int,int>>& queue, vector<vector<Space>>& memory){
     const pair<int,int> head = queue.front();
     queue.pop_front();
@@ -62,8 +90,11 @@ int main(){
     }
     file.close();
     int n = max_v - min_v + 1;
+    int first_n_byes = 1024; //1024
     vector<vector<Space>> memory(n,vector<Space>(n));
-    for(int i=0;i<1024;++i){
+    
+    //Part 1 
+    for(int i=0;i<first_n_byes;++i){
         memory[falling_bytes[i].second][falling_bytes[i].first].blocked = true;
     }
     list<pair<int,int>> queue{{0,0}};
@@ -72,6 +103,42 @@ int main(){
         breadth_search(queue,memory);
     }
     cout << "Part 1: " << memory[queue.front().second][queue.front().first].depth << endl;
-    cout<< "Part 2: " << 0 << endl;
+    
+    //Part 2
+    for(int i=first_n_byes;i<falling_bytes.size();++i){
+        memory[falling_bytes[i].second][falling_bytes[i].first].blocked = true;
+    }
+    for(vector<Space>& line:memory){
+        for(Space& s:line){
+            s.depth=0;
+            s.visited=false;
+        }
+    }
+    queue.clear();
+    queue.emplace_back(0,0);
+    memory[0][0].visited = true;
+    while(queue.size() && !(queue.front().first == max_v && queue.front().second == max_v)){
+        breadth_search(queue,memory);
+    }
+    //print(memory);
+    int i = falling_bytes.size()-1;
+    for(;i>=0;--i){
+        memory[falling_bytes[i].second][falling_bytes[i].first].blocked = false;
+        if(reached(falling_bytes[i].first,falling_bytes[i].second-1,memory))
+            queue.emplace_back(falling_bytes[i].first,falling_bytes[i].second-1);
+        if(reached(falling_bytes[i].first,falling_bytes[i].second+1,memory))
+            queue.emplace_back(falling_bytes[i].first,falling_bytes[i].second+1);
+        if(reached(falling_bytes[i].first-1,falling_bytes[i].second,memory))
+            queue.emplace_back(falling_bytes[i].first-1,falling_bytes[i].second);
+        if(reached(falling_bytes[i].first+1,falling_bytes[i].second,memory))
+            queue.emplace_back(falling_bytes[i].first+1,falling_bytes[i].second);
+        while(queue.size() && !(queue.front().first == max_v && queue.front().second == max_v)){
+            breadth_search(queue,memory);
+        }
+        //print(memory);
+        if(queue.size() && queue.front().first == max_v && queue.front().second == max_v)
+            break;   
+    }
+    cout<< "Part 2: " << falling_bytes[i].first << ',' << falling_bytes[i].second << endl;
     return 0;
 }

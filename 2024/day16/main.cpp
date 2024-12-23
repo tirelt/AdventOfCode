@@ -2,7 +2,9 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <queue>
 #include <set>
+#include <map>
 #include <list>
 
 using std::vector;
@@ -12,13 +14,14 @@ using std::string;
 using std::ifstream;
 using std::list;
 using std::set;
+using std::map;
+using std::priority_queue;
 
 struct Position{
     int x;
     int y;
     int dir;
     int cum_score;
-    set<int> stack;
 
     int hash() const{
         return dir*1'000'000+x*1'000+y;
@@ -46,7 +49,6 @@ struct Position{
             temp.x = new_x;
             temp.y = new_y;
             temp.cum_score += 1;
-            //temp.stack.insert(new_x*1'000+new_y);
             next.push_back(temp);
         }
         Position temp = *this;
@@ -57,63 +59,53 @@ struct Position{
         next.push_back(temp);
         return next;
     }
+    bool operator<(const Position& p) const{
+        return p.cum_score < cum_score;
+    }
 };
 
-void dijkstra(list<Position>& queue,const vector<vector<char>>& maze,set<int>& treated){
-    const Position p = queue.front();
-    queue.pop_front();
+struct Shortest{
+    Shortest(){};
+    Shortest(const int c,list<int> l):cum_score(c),come_from(l){}
+    int cum_score;
+    list<int> come_from;
+};
+
+void dijkstra(priority_queue<Position>& queue,const vector<vector<char>>& maze,map<int,Shortest>& shortest_known){
+    const Position p = queue.top();
+    queue.pop();
     list<Position> new_queue = p.next_position(maze);
-    treated.insert(p.hash());
     for(const auto& new_p:new_queue){
-        if(treated.find(new_p.hash())==treated.end()){
-            auto ite = queue.begin();
-            bool need_to_insert=true;
-            while(ite!=queue.end()){
-                if(ite->hash()==new_p.hash()){
-                    if( ite->cum_score > new_p.cum_score){
-                        ite = queue.erase(ite);
-                    } else{
-                        need_to_insert = false;
-                        /*
-                        if (ite->cum_score = new_p.cum_score){
-                            for(const int& h:new_p.stack){
-                                ite->stack.insert(h);
-                            }
-                        }*/
-                    }
-                    break;
-                }
-                ++ite;
-            }
-            if(need_to_insert){
-                auto ite = queue.begin();
-                while(ite!=queue.end() && ite->cum_score < new_p.cum_score){
-                    ++ite;
-                }
-                queue.insert(ite,new_p);
-            }
+        int new_hash = new_p.hash();
+        if(shortest_known.find(new_hash)==shortest_known.end() || shortest_known[new_hash].cum_score > new_p.cum_score){
+            shortest_known[new_hash] = Shortest(new_p.cum_score,{p.hash()});
+            queue.push(new_p);       
+        } else if(shortest_known[new_hash].cum_score == new_p.cum_score){
+            shortest_known[new_hash].come_from.push_back(p.hash());
         }
     }
 }
+
 int main(){
     std::ifstream file("input");
     string line;
     vector<vector<char>> maze;
     int i=0,j=0,x_final,y_final;
-    list<Position> queue;
-    Position p_init;
+    priority_queue<Position> queue;
+    map<int,Shortest> shortest_known;
     while(getline(file,line)){
         vector<char> temp;
         j = 0;
         for(const char& c:line){
             temp.emplace_back(c);
             if(c=='S'){
+                Position p_init;
                 p_init.x = i;
                 p_init.y = j;
                 p_init.dir = 1;
                 p_init.cum_score = 0;
-                //p_init.stack.insert(p_init.x*1'000+p_init.y);
-                queue.push_back(p_init);
+                queue.push(p_init);
+                shortest_known[p_init.hash()] = Shortest(p_init.cum_score,{});
             }
             if(c=='E'){
                 x_final = i;
@@ -125,12 +117,20 @@ int main(){
         ++i;
     }
     file.close();
-    set<int> treated;
-    while(queue.size() && !(queue.front().x == x_final && queue.front().y == y_final )){
-        dijkstra(queue,maze,treated);
-    }
     
-    cout<< "Part 1: " << queue.front().cum_score << endl;
-    cout<< "Part 2: " << queue.front().stack.size() << endl;
+    while(queue.size() && !(queue.top().x == x_final && queue.top().y == y_final )){
+        dijkstra(queue,maze,shortest_known);
+    }
+    cout<< "Part 1: " << queue.top().cum_score << endl;
+    list<int> to_check{queue.top().hash()};
+    set<int> unique_pos;
+    while(to_check.size()){
+        for(const int& next:shortest_known[to_check.front()].come_from){
+            unique_pos.insert(next%1'000'000);
+            to_check.push_back(next);
+        }
+        to_check.pop_front();
+    }
+    cout<< "Part 2: " << unique_pos.size()+1 << endl;
     return 0;
 }

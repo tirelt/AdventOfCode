@@ -16,25 +16,28 @@ using std::regex;
 using std::sregex_iterator;
 using std::map;
 
-bool can_form(const string& pattern,const list<string>& towels,map<string,bool>& memo){
+pair<bool,long long> can_form(const string& pattern,const list<string>& towels,map<string,pair<bool,long long>>& memo,bool lazy){
     if(!pattern.size()){
-        return true;
+        memo[pattern] = {true,1};
+        return memo[pattern];
     }
     if(memo.find(pattern)!=memo.end()){
         return memo[pattern];
     }
-    bool ret =false;
-    memo.insert({pattern,false});
+    pair<bool,long long> ret = {false,0};
+    memo.insert({pattern,{false,0}});
     for(const string& towel:towels){
         if(pattern.size() >= towel.size() && pattern.substr(0,towel.size()) == towel){
-            ret = can_form(pattern.substr(towel.size()),towels,memo);
-            if(ret){
-                memo[pattern] = true;
-                break;
+            ret = can_form(pattern.substr(towel.size()),towels,memo,lazy);
+            if(ret.first){
+                memo[pattern].first = true;
+                memo[pattern].second += ret.second;
+                if(lazy)
+                    break;
             }
         }
     }
-    return ret;
+    return memo[pattern];
 }
 int main(){
     std::ifstream file("input");
@@ -51,12 +54,22 @@ int main(){
     while(getline(file,line)){
         patterns.push_back(line);
     }
-    map<string,bool> memo;
+    map<string,pair<bool,long long>> memo;
     int ret_1 = 0;
     for(const string& pattern:patterns){
-        if(can_form(pattern,towels,memo))
+        if(can_form(pattern,towels,memo,true).first)
             ++ret_1;
     }
     cout<< "Part 1: " << ret_1 << endl;
+    
+    long long ret_2 = 0;
+    memo.clear();
+    for(const string& pattern:patterns){
+        list<string> usable_towels(towels);
+        if(can_form(pattern,usable_towels,memo,false).first){
+            ret_2 += memo[pattern].second;
+        }
+    }
+    cout<< "Part 2: " << ret_2 << endl;
     return 0;
 }

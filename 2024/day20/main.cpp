@@ -127,6 +127,7 @@ int main(){
     cheat_numbers.clear();
     int max_depth = 20;
     for(const auto& entry:path){
+        //could do some smart memo somehwere
         map<pair<int,int>,int> memo;
         memo[entry] = 0;
         list<pair<int,int>> queue{entry};

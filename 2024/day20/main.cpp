@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <list>
 #include <stdexcept>
 
@@ -13,6 +14,7 @@ using std::pair;
 using std::list;
 using std::vector;
 using std::map;
+using std::set;
 
 struct Tile{
     bool is_wall;
@@ -42,8 +44,9 @@ void get_dist(int i, int j, int from_i, int from_j,list<pair<int,int>>& path,vec
     race_track[i][j].dist = 1+race_track[new_i][new_j].dist;
 }
 
+
 int main(){
-    std::ifstream file("input");
+    std::ifstream file("test_input");
     string line;
     int i=0,j=0,i_init,j_init;
     vector<vector<Tile>> race_track;
@@ -66,6 +69,8 @@ int main(){
     list<pair<int,int>> path{{i_init,j_init}};
     map<int,int> cheat_numbers;
     get_dist(i_init,j_init,i_init,j_init,path,race_track);
+    
+    //Part 1
     for(const auto& coord:path){
         if(coord.first + 2 < race_track.size() && race_track[coord.first+1][coord.second].is_wall &&  !race_track[coord.first+2][coord.second].is_wall && race_track[coord.first+2][coord.second].dist < race_track[coord.first][coord.second].dist)
             cheat_numbers[race_track[coord.first][coord.second].dist - race_track[coord.first + 2][coord.second].dist - 2] += 1;
@@ -84,6 +89,44 @@ int main(){
             ret_1 += temp.second;
     }
     cout<< "Part 1: " << ret_1 << endl;
+
+    //Part 2
+    cheat_numbers.clear();
+    for(const auto& coord:path){
+        pair<int,int> entry = {coord.first,coord.second};
+        set<pair<int,int>> queue = {entry};
+        for(int level = 1;level<20;++level){
+            set<pair<int,int>> new_queue;
+            for(const auto& p:queue){
+                if(p.first+1<race_track.size() && race_track[p.first+1][p.second].is_wall)
+                    new_queue.insert({p.first+1,p.second});
+                if(p.first-1>=0 && race_track[p.first-1][p.second].is_wall)
+                    new_queue.insert({p.first-1,p.second});
+                if(p.second+1<race_track[0].size() && race_track[p.first][p.second+1].is_wall)
+                    new_queue.insert({p.first,p.second+1});
+                if(p.second-1>=0 && race_track[p.first][p.second-1].is_wall)
+                    new_queue.insert({p.first,p.second-1});
+            }
+            queue = new_queue;
+            set<pair<int,int>> exits;
+            for(const auto& p:queue){
+                if(p.first+1<race_track.size() && !race_track[p.first+1][p.second].is_wall)
+                    exits.insert({p.first+1,p.second});
+                if(p.first-1>=0 && !race_track[p.first-1][p.second].is_wall)
+                    exits.insert({p.first-1,p.second});
+                if(p.second+1<race_track[0].size() && !race_track[p.first][p.second+1].is_wall)
+                    exits.insert({p.first,p.second+1});
+                if(p.second-1>=0 && !race_track[p.first][p.second-1].is_wall)
+                    exits.insert({p.first,p.second-1});
+            }
+            for(const auto& p:exits){
+                int saved = race_track[entry.first][entry.second].dist - race_track[p.first][p.second].dist - level - 1;
+                if(saved>0){
+                    cheat_numbers[saved] += 1;
+                }
+            }
+        }
+    }
     cout<< "Part 2: " << 0 << endl;
     return 0;
 }

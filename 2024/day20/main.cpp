@@ -44,9 +44,44 @@ void get_dist(int i, int j, int from_i, int from_j,list<pair<int,int>>& path,vec
     race_track[i][j].dist = 1+race_track[new_i][new_j].dist;
 }
 
+void depth_search(list<pair<int,int>>& queue, vector<vector<Tile>>& race_track, map<pair<int,int>,int>& memo, map<pair<int,int>,int>& memo_exit,int max_depth){
+    while(queue.size() && memo[queue.front()]<max_depth){
+        const pair<int,int> head = queue.front();
+        queue.pop_front();
+        list<pair<int,int>> new_queue;
+        if(head.first+1<race_track.size())
+            new_queue.push_back({head.first+1,head.second});
+        if(head.first-1>=0 )
+            new_queue.push_back({head.first-1,head.second});
+        if(head.second+1<race_track[0].size())
+            new_queue.push_back({head.first,head.second+1});
+        if(head.second-1>=0)
+            new_queue.push_back({head.first,head.second-1});
+        for(const auto& el:new_queue){
+            if(memo.find(el)==memo.end()){
+                memo[el] = memo[head] + 1;
+                queue.push_back(el);
+            }
+        }
+        list<pair<int,int>> exits;
+            if(head.first+1<race_track.size() && !race_track[head.first+1][head.second].is_wall)
+                exits.push_back({head.first+1,head.second});
+            if(head.first-1>=0 && !race_track[head.first-1][head.second].is_wall)
+                exits.push_back({head.first-1,head.second});
+            if(head.second+1<race_track[0].size() && !race_track[head.first][head.second+1].is_wall)
+                exits.push_back({head.first,head.second+1});
+            if(head.second-1>=0 && !race_track[head.first][head.second-1].is_wall)
+                exits.push_back({head.first,head.second-1});
+            for(const auto& el:exits){
+                if(memo_exit.find(el)==memo_exit.end()){
+                    memo_exit[el] = memo[head] + 1;
+                }
+            }
+    }
+}
 
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     string line;
     int i=0,j=0,i_init,j_init;
     vector<vector<Tile>> race_track;
@@ -80,8 +115,6 @@ int main(){
             cheat_numbers[race_track[coord.first][coord.second].dist - race_track[coord.first][coord.second+2].dist - 2] += 1;
         if(coord.second - 2 >= 0 && race_track[coord.first][coord.second-1].is_wall &&  !race_track[coord.first][coord.second-2].is_wall && race_track[coord.first][coord.second-2].dist < race_track[coord.first][coord.second].dist)
             cheat_numbers[race_track[coord.first][coord.second].dist - race_track[coord.first ][coord.second-2].dist - 2] += 1;
-        if(cheat_numbers.find(82)!=cheat_numbers.end())
-            auto a = 1;
     }
     int ret_1 = 0;
     for(const auto& temp:cheat_numbers){
@@ -92,41 +125,29 @@ int main(){
 
     //Part 2
     cheat_numbers.clear();
-    for(const auto& coord:path){
-        pair<int,int> entry = {coord.first,coord.second};
-        set<pair<int,int>> queue = {entry};
-        for(int level = 1;level<20;++level){
-            set<pair<int,int>> new_queue;
-            for(const auto& p:queue){
-                if(p.first+1<race_track.size() && race_track[p.first+1][p.second].is_wall)
-                    new_queue.insert({p.first+1,p.second});
-                if(p.first-1>=0 && race_track[p.first-1][p.second].is_wall)
-                    new_queue.insert({p.first-1,p.second});
-                if(p.second+1<race_track[0].size() && race_track[p.first][p.second+1].is_wall)
-                    new_queue.insert({p.first,p.second+1});
-                if(p.second-1>=0 && race_track[p.first][p.second-1].is_wall)
-                    new_queue.insert({p.first,p.second-1});
-            }
-            queue = new_queue;
-            set<pair<int,int>> exits;
-            for(const auto& p:queue){
-                if(p.first+1<race_track.size() && !race_track[p.first+1][p.second].is_wall)
-                    exits.insert({p.first+1,p.second});
-                if(p.first-1>=0 && !race_track[p.first-1][p.second].is_wall)
-                    exits.insert({p.first-1,p.second});
-                if(p.second+1<race_track[0].size() && !race_track[p.first][p.second+1].is_wall)
-                    exits.insert({p.first,p.second+1});
-                if(p.second-1>=0 && !race_track[p.first][p.second-1].is_wall)
-                    exits.insert({p.first,p.second-1});
-            }
-            for(const auto& p:exits){
-                int saved = race_track[entry.first][entry.second].dist - race_track[p.first][p.second].dist - level - 1;
-                if(saved>0){
-                    cheat_numbers[saved] += 1;
-                }
+    int max_depth = 20;
+    for(const auto& entry:path){
+        map<pair<int,int>,int> memo;
+        memo[entry] = 0;
+        list<pair<int,int>> queue{entry};
+        map<pair<int,int>,int> memo_exit;
+        depth_search(queue, race_track, memo, memo_exit, max_depth);
+        for(const auto& [exit,depth]:memo_exit){
+            int saved = race_track[entry.first][entry.second].dist - race_track[exit.first][exit.second].dist - depth;
+            if(exit.first ==  7 && exit.second == 3)
+                auto v = 1;
+            if(saved == 72)
+                auto t= 1;
+            if(saved>0){
+                cheat_numbers[saved] += 1;
             }
         }
     }
-    cout<< "Part 2: " << 0 << endl;
+    int ret_2 = 0;
+    for(const auto& temp:cheat_numbers){
+        if(temp.first>=100)
+            ret_2 += temp.second;
+    }
+    cout<< "Part 2: " << ret_2 << endl;
     return 0;
 }

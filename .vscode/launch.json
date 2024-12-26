@@ -5,13 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug 2024/day23/main",
+            "name": "Debug 2024/day24/main",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${cwd}/2024/day23/main",
+            "program": "${cwd}/2024/day24/main",
             "args": [],
             //"stopAtEntry": false,
-            "cwd": "${cwd}/2024/day23",
+            "cwd": "${cwd}/2024/day24",
             "MIMode": "gdb",
             "miDebuggerPath": "/usr/bin/gdb",
             "environment": [],
@@ -23,7 +23,7 @@
                 "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build 2024/day23/main"
+            "preLaunchTask": "Build 2024/day24/main"
         }
 
     ]

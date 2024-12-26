@@ -100,15 +100,23 @@ struct Gate_comp{
     pair<shared_ptr<Gate_comp>,shared_ptr<Gate_comp>> operands;
     string oper;
     string label;
-    bool match=true;
+    //bool match=false;
 };
 bool comparison(Gate_comp& g_1, const Gate_comp& g_2){
-    if(g_1.operands.first == nullptr || g_1.operands.second == nullptr || g_1.operands.first == nullptr || g_1.operands.second == nullptr){
-        return (g_1.oper == g_2.oper) && (g_1.operands.first == nullptr) && (g_1.operands.second == nullptr) && (g_2.operands.first == nullptr) && (g_2.operands.second == nullptr);
+    if(g_1.operands.first == nullptr || g_1.operands.second == nullptr || g_2.operands.first == nullptr || g_2.operands.second == nullptr){
+        const bool ret = (g_1.oper == g_2.oper) && (g_1.operands.first == nullptr) && (g_1.operands.second == nullptr) && (g_2.operands.first == nullptr) && (g_2.operands.second == nullptr);
+        //g_1.match = g_1.match ||ret;
+        return ret;
     } 
+    /*
+    const bool ret_1 = comparison(*g_1.operands.first, *g_2.operands.first) || comparison(*g_1.operands.first ,*g_2.operands.second);
+    const bool ret_2 = comparison(*g_1.operands.second, *g_2.operands.second) || comparison(*g_1.operands.second ,*g_2.operands.first);
+    */
     const bool ret = g_1.oper == g_2.oper && ((comparison(*g_1.operands.first, *g_2.operands.first) && comparison(*g_1.operands.second ,*g_2.operands.second)) ||
                                         (comparison(*g_1.operands.first, *g_2.operands.second)&&  comparison(*g_1.operands.second,*g_2.operands.first)));
-    g_1.match =  g_1.oper == g_2.oper;
+    
+    //const bool ret = ret_1 && ret_2 && (g_1.oper == g_2.oper);
+    //g_1.match = g_1.match || (g_1.oper == g_2.oper && (ret_1||ret_2));
     return ret;
 }
 
@@ -125,6 +133,16 @@ shared_ptr<Gate_comp> expend(int depth, const string label,map<string,Gate_descr
     g_ptr->operands.second =  expend(depth-1, output_map[label].operands.second,output_map );
     return g_ptr;
 }
+
+void print(Gate_comp& g){
+    cout << g.label << ',';
+    if(g.operands.first==nullptr||g.operands.second==nullptr){
+        return;
+    }
+    print(*g.operands.first);
+    print(*g.operands.second);
+}
+
 
 string int_to_label(char type,int i){
     string ret;
@@ -191,7 +209,16 @@ int main(){
         shared_ptr<Gate_comp> g_real_ptr = expend(3, int_to_label('z',i),output_map);
         
         //Comparison
+        if(i==15){
+            auto a = 1;
+        }
         bool test = comparison(*g_real_ptr,g_expected);
+        if(!test){
+            print(*g_real_ptr);
+            cout << endl;
+        }
+        print(*g_real_ptr);
+        cout << endl;
         auto a = 1;
     }
 

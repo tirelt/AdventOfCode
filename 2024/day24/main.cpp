@@ -2,20 +2,22 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <set>
 #include <map>
 #include <memory>
-#include <algorithm>
+#include <regex>
+#include <cmath>
 
 using std::cout;
 using std::endl;
 using std::string;
-using std::pair;
 using std::vector;
 using std::map;
-using std::set;
 using std::shared_ptr;
 using std::make_shared;
+using std::regex;
+using std::smatch;
+using std::regex_search;
+using std::pow;
 
 using gate_type = bool (*)(bool, bool);
 
@@ -25,7 +27,7 @@ bool and_gate(bool a, bool b){
     return a && b;
 }
 bool or_gate(bool a, bool b){
-    return a && b;
+    return a || b;
 }
 bool xor_gate(bool a, bool b){
     return a ^ b;
@@ -34,7 +36,7 @@ bool xor_gate(bool a, bool b){
 struct Gate;
 
 struct Cable {
-    Cable(string l):label(l){}
+    Cable(string l):label(l),is_set(false),value(0){}
     string label;
     bool value;
     bool is_set;
@@ -45,19 +47,16 @@ struct Cable {
 struct Gate{
     Gate(shared_ptr<Cable>& l,shared_ptr<Cable>&  r,shared_ptr<Cable>& o,string gate_str)
             :left_cable(l),right_cable(r),output(o),func(func_map[gate_str]){
-        this->run();  
     }
     shared_ptr<Cable> left_cable;
     shared_ptr<Cable> right_cable;
     shared_ptr<Cable> output;
     gate_type func;
     void run(){
-    shared_ptr<Cable> output;
         if(!output->is_set && left_cable->is_set && right_cable->is_set){
             output->set_value(func(left_cable->value,right_cable->value));
         }
     }
-
     static map<string,gate_type> func_map;
     static void initialize_func_map(){ 
         func_map["AND"] = and_gate; 
@@ -74,13 +73,41 @@ void Cable::set_value(bool v){
     }
 }
 
+void add_gate_to_cables(shared_ptr<Gate> gate){
+    gate->left_cable->gates.push_back(gate);
+    gate->right_cable->gates.push_back(gate);
+    gate->run(); 
+}
 map<string, gate_type> Gate::func_map;
 
 int main(){
+    Gate::initialize_func_map();
     std::ifstream file("input");
     string line;
-    Gate::initialize_func_map();
-    cout << "Part 1: " << 0 << endl;
+    map<string,shared_ptr<Cable>> network;
+    string label;
+
+    while(getline(file,line)){
+        if(!line.size()) break;
+        label = line.substr(0,3);
+        network[label] = make_shared<Cable>(line);
+        network[label]->set_value(stoi(line.substr(5,1)));
+    }
+    regex pattern(R"((\w+)\s+(\w+)\s+(\w+)\s+->\s+(\w+))");
+    smatch matches;
+    while(getline(file,line)){
+        regex_search(line, matches, pattern);
+        if(network.find(matches.str(1))==network.end()) network[matches.str(1)] = make_shared<Cable>(matches.str(1));
+        if(network.find(matches.str(3))==network.end()) network[matches.str(3)] = make_shared<Cable>(matches.str(3));
+        if(network.find(matches.str(4))==network.end()) network[matches.str(4)] = make_shared<Cable>(matches.str(4));
+        shared_ptr<Gate> gate = make_shared<Gate>(network[matches.str(1)],network[matches.str(3)],network[matches.str(4)],matches.str(2));
+        add_gate_to_cables(gate);
+    }
+    long long ret_1 = 0;
+    for(const auto& [label,ptr]:network){
+        if(label[0]=='z') ret_1 += ptr->value*pow(2,stoi(label.substr(1)));
+    }
+    cout << "Part 1: " << ret_1 << endl;
     cout << "Part 2: " << 0 << endl;
     return 0;
 }

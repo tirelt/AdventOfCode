@@ -87,7 +87,6 @@ void add_gate_to_cables(shared_ptr<Gate> gate){
 map<string, gate_type> Gate::func_map;
 bool Cable::track;
 
-
 struct Gate_description{
     Gate_description() = default;
     Gate_description(string o,pair<string,string> s):oper(o),operands(s){}
@@ -100,23 +99,17 @@ struct Gate_comp{
     pair<shared_ptr<Gate_comp>,shared_ptr<Gate_comp>> operands;
     string oper;
     string label;
-    //bool match=false;
+    int weight = 0;
 };
-bool comparison(Gate_comp& g_1, const Gate_comp& g_2){
+
+bool comparison(Gate_comp& g_1, const Gate_comp& g_2,list<string>& errors){
     if(g_1.operands.first == nullptr || g_1.operands.second == nullptr || g_2.operands.first == nullptr || g_2.operands.second == nullptr){
         const bool ret = (g_1.oper == g_2.oper) && (g_1.operands.first == nullptr) && (g_1.operands.second == nullptr) && (g_2.operands.first == nullptr) && (g_2.operands.second == nullptr);
-        //g_1.match = g_1.match ||ret;
         return ret;
     } 
-    /*
-    const bool ret_1 = comparison(*g_1.operands.first, *g_2.operands.first) || comparison(*g_1.operands.first ,*g_2.operands.second);
-    const bool ret_2 = comparison(*g_1.operands.second, *g_2.operands.second) || comparison(*g_1.operands.second ,*g_2.operands.first);
-    */
-    const bool ret = g_1.oper == g_2.oper && ((comparison(*g_1.operands.first, *g_2.operands.first) && comparison(*g_1.operands.second ,*g_2.operands.second)) ||
-                                        (comparison(*g_1.operands.first, *g_2.operands.second)&&  comparison(*g_1.operands.second,*g_2.operands.first)));
-    
-    //const bool ret = ret_1 && ret_2 && (g_1.oper == g_2.oper);
-    //g_1.match = g_1.match || (g_1.oper == g_2.oper && (ret_1||ret_2));
+    const bool ret = g_1.oper == g_2.oper && ((comparison(*g_1.operands.first,*g_2.operands.first,errors) && comparison(*g_1.operands.second,*g_2.operands.second,errors))
+                                             ||(comparison(*g_1.operands.first,*g_2.operands.second,errors) &&  comparison(*g_1.operands.second,*g_2.operands.first,errors)));
+    if(!ret) errors.push_back(g_1.label);
     return ret;
 }
 
@@ -126,23 +119,23 @@ shared_ptr<Gate_comp> expend(int depth, const string label,map<string,Gate_descr
     g_ptr -> label = label;
     if(!depth || label[0] == 'x' || label[0] == 'y'){
         g_ptr->oper = label;
+        g_ptr->weight = 1;
+        if(label[0] != 'x' && label[0] != 'y') ++(g_ptr->weight);
         return g_ptr;
     }
     g_ptr->oper = output_map[label].oper;
-    g_ptr->operands.first =  expend(depth-1, output_map[label].operands.first,output_map );
-    g_ptr->operands.second =  expend(depth-1, output_map[label].operands.second,output_map );
+    shared_ptr<Gate_comp> temp_1 =  expend(depth-1, output_map[label].operands.first,output_map );
+    shared_ptr<Gate_comp> temp_2 = expend(depth-1, output_map[label].operands.second,output_map );
+    g_ptr->weight = temp_1->weight + temp_2->weight;
+    if(temp_1->weight <= temp_2->weight){// || temp_1->label[0]=='x'
+        g_ptr->operands.first = temp_1;
+        g_ptr->operands.second = temp_2; 
+    } else {
+        g_ptr->operands.first = temp_2;
+        g_ptr->operands.second = temp_1; 
+    }
     return g_ptr;
 }
-
-void print(Gate_comp& g){
-    cout << g.label << ',';
-    if(g.operands.first==nullptr||g.operands.second==nullptr){
-        return;
-    }
-    print(*g.operands.first);
-    print(*g.operands.second);
-}
-
 
 string int_to_label(char type,int i){
     string ret;
@@ -189,9 +182,8 @@ int main(){
         } 
     }
     cout << "Part 1: " << ret_1 << endl;
-
+    vector<string> part_2;
     for(int i=2;i<last;++i){
-
         //expected 
         Gate_comp g_1; g_1.oper = int_to_label('x',i-1);
         Gate_comp g_2; g_2.oper = int_to_label('y',i-1);
@@ -199,7 +191,7 @@ int main(){
         Gate_comp g_4; g_4.oper = output_map[int_to_label('z',i-1)].operands.first;
         Gate_comp g_5; g_5.oper = output_map[int_to_label('z',i-1)].operands.second;
         Gate_comp g_6; g_6.operands.first = make_shared<Gate_comp>(g_4); g_6.operands.second = make_shared<Gate_comp>(g_5); g_6.oper = "AND";
-        Gate_comp g_7; g_7.operands.first = make_shared<Gate_comp>(g_6); g_7.operands.second = make_shared<Gate_comp>(g_3); g_7.oper = "OR";
+        Gate_comp g_7; g_7.operands.first = make_shared<Gate_comp>(g_3); g_7.operands.second = make_shared<Gate_comp>(g_6); g_7.oper = "OR";
         Gate_comp g_8; g_8.oper = int_to_label('x',i);
         Gate_comp g_9; g_9.oper = int_to_label('y',i);
         Gate_comp g_10; g_10.operands.first = make_shared<Gate_comp>(g_8); g_10.operands.second = make_shared<Gate_comp>(g_9); g_10.oper = "XOR";
@@ -207,21 +199,17 @@ int main(){
 
         // real
         shared_ptr<Gate_comp> g_real_ptr = expend(3, int_to_label('z',i),output_map);
-        
+               
         //Comparison
-        if(i==15){
-            auto a = 1;
+        list<string> errors;
+        bool test = comparison(*g_real_ptr,g_expected,errors);
+        if(!test){ 
+            part_2.push_back(errors.front());
         }
-        bool test = comparison(*g_real_ptr,g_expected);
-        if(!test){
-            print(*g_real_ptr);
-            cout << endl;
-        }
-        print(*g_real_ptr);
-        cout << endl;
-        auto a = 1;
     }
-
-    cout << "Part 2: " << 0 << endl;
+    std::sort(part_2.begin(),part_2.end());
+    cout << "Part 2: ";
+    for(const auto& e:part_2) cout << e << ','; 
+    cout << endl;
     return 0;
 }

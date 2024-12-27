@@ -1,7 +1,7 @@
 CXX=g++
 TARGET=main
 DEBUG_FLAG=-fdiagnostics-color=always -g
-CXXFLAGS= -Wno-psabi -std=c++0x
+CXXFLAGS= -Wno-psabi -std=c++20
 
 SRCS := $(wildcard *.cpp)
 OBJS := $(SRCS:%cpp=%o)

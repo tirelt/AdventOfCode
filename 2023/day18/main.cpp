@@ -61,6 +61,27 @@ int depth_search(pair<int,int> pos_init, vector<vector<char>>& plan){
     return number;
 }
 
+bool collaspe(list<pair<char,int>>::iterator& ite,list<pair<char,int>>::iterator& new_ite,list<pair<char,int>>& instructions_2){
+    if(new_ite->first == ite->first){
+        ite->second += new_ite->second;
+        instructions_2.erase(new_ite);
+    } else if((new_ite->first = 'R' && ite->first=='L') || (new_ite->first = 'L' && ite->first=='R') && (new_ite->first = 'U' && ite->first=='D') || (new_ite->first = 'D' && ite->first=='U')){
+        if(ite->second>new_ite->second){
+            ite->second -= new_ite->second;
+            instructions_2.erase(new_ite);
+        } else if(new_ite->second>ite->second){
+            new_ite->second -= ite->second;
+            instructions_2.erase(ite);
+            ite = new_ite;
+        } else{
+            instructions_2.erase(new_ite);
+            instructions_2.erase(ite++);
+        }
+    } else{
+        return false;
+    }
+    return true;
+}
 int main(){
     std::ifstream file("test_input");
     regex pattern(R"((\w)\s(\d+)\s\(#([a-fA-F0-9]+)\))");
@@ -170,7 +191,7 @@ int main(){
     set<string> recognized_pattern{"URD","RDL","DLU","LUR"};
     auto ite = instructions_2.begin();
     while(instructions_2.size()>2 && index<max_ite){
-        auto prev_ite = (ite == instructions_2.begin()) ? instructions_2.end() : prev(ite);
+        auto prev_ite = (ite == instructions_2.begin()) ? instructions_2.end() : prev(ite);--prev_ite;
         auto next_ite = ite;++next_ite;
         if(next_ite==instructions_2.end()) next_ite = instructions_2.begin();
         string p;
@@ -182,7 +203,27 @@ int main(){
                 prev_ite->second -= next_ite->second;
                 ret_2 += next_ite->second*ite->second;
                 instructions_2.erase(next_ite);
+            } else if (next_ite->second>prev_ite->second){
+                next_ite->second -= prev_ite->second;
+                ret_2 += prev_ite->second*ite->second;
+                instructions_2.erase(prev_ite);
+            } else{
+                ret_2 += prev_ite->second*ite->second;
+                instructions_2.erase(prev_ite);
+                instructions_2.erase(next_ite);
             }
+            auto new_ite = (ite == instructions_2.begin()) ? instructions_2.end() : prev(ite);--new_ite;
+            while(collaspe(ite,new_ite,instructions_2)){
+                new_ite = (ite == instructions_2.begin()) ? instructions_2.end() : prev(ite);--new_ite;
+            }
+            new_ite = ite;++next_ite;
+            if(next_ite==instructions_2.end()) next_ite = instructions_2.begin();
+            while(collaspe(ite,new_ite,instructions_2)){
+                new_ite = ite;++next_ite;
+                if(next_ite==instructions_2.end()) next_ite = instructions_2.begin();
+            }
+        } else{
+            ++ite;
         }
         ++index;
     }

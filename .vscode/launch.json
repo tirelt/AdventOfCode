@@ -6,23 +6,11 @@
     "configurations": [
         {
             "name": "Debug 2023/day18/main",
-            "type": "cppdbg",
+            "type": "lldb",
             "request": "launch",
             "program": "${cwd}/2023/day18/main",
             "args": [],
-            //"stopAtEntry": false,
             "cwd": "${cwd}/2023/day18",
-            "MIMode": "gdb",
-            "miDebuggerPath": "/usr/bin/gdb",
-            "environment": [],
-            "externalConsole": false,
-            "setupCommands": [
-                {
-                "description": "Enable pretty-printing for gdb",
-                "text": "-enable-pretty-printing",
-                "ignoreFailures": true
-                }
-            ],
             "preLaunchTask": "Build 2023/day18/main"
         }
 

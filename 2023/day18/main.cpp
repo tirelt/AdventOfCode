@@ -67,7 +67,7 @@ int main(){
     smatch matches;
     string line;
     list<pair<char,int>> instructions_1;
-    vector<pair<char,int>> instructions_2;
+    list<pair<char,int>> instructions_2;
     int i=0,j=0,max_i=0,min_i=0,max_j=0,min_j=0;
     while(getline(file,line)){
         regex_search(line,matches,pattern);
@@ -167,14 +167,21 @@ int main(){
     
     int index = 0,max_ite = 1000,prev_index,next_index;
     long long ret_2 = 0;
-    vector<string> recognized_pattern{"URD","RDL","DLU","LUR"};
+    set<string> recognized_pattern{"URD","RDL","DLU","LUR"};
+    auto ite = instructions_2.begin();
     while(instructions_2.size()>2 && index<max_ite){
-        prev_index = (index-1)%instructions_2.size();
-        next_index = (index+1)%instructions_2.size();
-        if(instructions_2[prev_index].first =='U' && instructions_2[prev_index].first=='R' && instructions_2[next_index].first=='D'){
-            if(instructions_2[prev_index].second>instructions_2[prev_index].second){
-                instructions_2[prev_index].second -= instructions_2[prev_index].second;
-                ret_2 += instructions_2[prev_index].second*instructions_2[prev_index].second;
+        auto prev_ite = (ite == instructions_2.begin()) ? instructions_2.end() : prev(ite);
+        auto next_ite = ite;++next_ite;
+        if(next_ite==instructions_2.end()) next_ite = instructions_2.begin();
+        string p;
+        p.push_back(prev_ite->first);
+        p.push_back(ite->first);
+        p.push_back(next_ite->first);
+        if(recognized_pattern.find(p)!=recognized_pattern.end()){
+            if(prev_ite->second>next_ite->second){
+                prev_ite->second -= next_ite->second;
+                ret_2 += next_ite->second*ite->second;
+                instructions_2.erase(next_ite);
             }
         }
         ++index;

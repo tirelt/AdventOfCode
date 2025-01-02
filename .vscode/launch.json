@@ -11,7 +11,7 @@
             "program": "${cwd}/2023/day18/main",
             "args": [],
             "cwd": "${cwd}/2023/day18",
-            "preLaunchTask": "Build 2023/day18/main"
+            "preLaunchTask": "Build 2023/day18/main",
         }
 
     ]

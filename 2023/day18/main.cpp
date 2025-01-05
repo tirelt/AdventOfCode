@@ -126,6 +126,7 @@ int main(){
     list<pair<char,int>> instructions_1;
     CircularList<pair<char,long long>> instructions_2;
     int i=0,j=0,max_i=0,min_i=0,max_j=0,min_j=0;
+    long long ret_2 = 0;
     while(getline(file,line)){
         regex_search(line,matches,pattern);
         int steps = stoi(matches.str(2));
@@ -165,8 +166,10 @@ int main(){
         case '3':
             new_dir = 'U';
             break;
-        }
-        instructions_2.push_back({new_dir,stoi(matches.str(3).substr(0,matches.str(3).size()-1), nullptr, 16)});
+        } 
+        int temp = stoi(matches.str(3).substr(0,matches.str(3).size()-1), nullptr, 16);
+        //ret_2 += temp;
+        instructions_2.push_back({new_dir,temp});
     }
     file.close();
     vector<vector<char>> plan(max_i-min_i+1,vector<char>(max_j-min_j+1,'.'));
@@ -223,9 +226,44 @@ int main(){
     cout << "Part 1  " << ret_1 << endl;
     
     int index = 0,max_ite = 1000,prev_index,next_index;
-    long long ret_2 = 0;
     set<string> recognized_pattern{"URD","RDL","DLU","LUR"};
+    set<string> inverted_pattern{"ULD","LDR","DRU","RUL"};
     auto ite = instructions_2.begin();
+    ++instructions_2.prev(ite);
+    do{
+        ++ite->second;
+        auto next_ite = instructions_2.next(ite);
+        switch (ite->first)
+        {
+        case 'R':
+            if(next_ite->first=='U'){
+                --ite->second;
+                --next_ite->second;
+            }
+            break;
+        case 'D':
+            if(next_ite->first=='R'){
+                --ite->second;
+                --next_ite->second;
+            }
+            break;
+        case 'L':
+            if(next_ite->first=='D'){
+                --ite->second;
+                --next_ite->second;
+            }
+            break;
+        case 'U':
+            if(next_ite->first=='L'){
+                --ite->second;
+                --next_ite->second;
+            }
+            break;
+        }
+        ite = next_ite;
+    } while(ite!=instructions_2.begin());
+    int mult = 0;
+    ite = instructions_2.next(instructions_2.next(instructions_2.next(ite)));
     while(instructions_2.size()>2 && index<max_ite){
         auto prev_ite = instructions_2.prev(ite);
         auto next_ite = instructions_2.next(ite);
@@ -233,18 +271,23 @@ int main(){
         p.push_back(prev_ite->first);
         p.push_back(ite->first);
         p.push_back(next_ite->first);
-        if(recognized_pattern.find(p)!=recognized_pattern.end()){
+        mult = 0;
+        if(recognized_pattern.find(p)!=recognized_pattern.end())
+            mult = 1;
+        else if (inverted_pattern.find(p)!=inverted_pattern.end())
+            mult = -1;
+        if(mult==1){
             if(prev_ite->second>next_ite->second){
                 prev_ite->second -= next_ite->second;
-                ret_2 += next_ite->second*ite->second;
+                ret_2 += mult*next_ite->second*ite->second;
                 ite = instructions_2.erase(next_ite);
                 ite = instructions_2.prev(ite);
             } else if (next_ite->second>prev_ite->second){
                 next_ite->second -= prev_ite->second;
-                ret_2 += prev_ite->second*ite->second;
+                ret_2 += mult*prev_ite->second*ite->second;
                 ite = instructions_2.erase(prev_ite);
             } else{
-                ret_2 += prev_ite->second*ite->second;
+                ret_2 += mult*prev_ite->second*ite->second;
                 ite = instructions_2.erase(prev_ite);
                 ite = instructions_2.prev(instructions_2.erase(instructions_2.next(ite)));
             }

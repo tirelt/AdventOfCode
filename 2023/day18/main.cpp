@@ -119,7 +119,7 @@ typename CircularList<T>::Iterator collaspe(typename CircularList<T>::Iterator i
 }
 
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     regex pattern(R"((\w)\s(\d+)\s\(#([a-fA-F0-9]+)\))");
     smatch matches;
     string line;
@@ -167,9 +167,7 @@ int main(){
             new_dir = 'U';
             break;
         } 
-        int temp = stoi(matches.str(3).substr(0,matches.str(3).size()-1), nullptr, 16);
-        //ret_2 += temp;
-        instructions_2.push_back({new_dir,temp});
+        instructions_2.push_back({new_dir,stoi(matches.str(3).substr(0,matches.str(3).size()-1), nullptr, 16)});
     }
     file.close();
     vector<vector<char>> plan(max_i-min_i+1,vector<char>(max_j-min_j+1,'.'));
@@ -225,12 +223,12 @@ int main(){
     ret_1 += depth_search({i,j}, plan);
     cout << "Part 1  " << ret_1 << endl;
     
-    int index = 0,max_ite = 1000,prev_index,next_index;
-    set<string> recognized_pattern{"URD","RDL","DLU","LUR"};
-    set<string> inverted_pattern{"ULD","LDR","DRU","RUL"};
+    int index = 0,max_ite = 10000,prev_index,next_index;
+    set<string> recognized_pattern{"URD","RDL","DLU","LUR"}; //assuming loop goes clockwise
+    set<string> inverted_pattern{"ULD","LDR","DRU","RUL"}; //this case happens if we the fontiers cross themselves
     auto ite = instructions_2.begin();
-    ++instructions_2.prev(ite);
-    do{
+    ++instructions_2.prev(ite); //last path goes 1 more 
+    do{ //we convert the number of dug cubes into frontier
         ++ite->second;
         auto next_ite = instructions_2.next(ite);
         switch (ite->first)
@@ -263,8 +261,7 @@ int main(){
         ite = next_ite;
     } while(ite!=instructions_2.begin());
     int mult = 0;
-    ite = instructions_2.next(instructions_2.next(instructions_2.next(ite)));
-    while(instructions_2.size()>2 && index<max_ite){
+    while(instructions_2.size()>=4 && index<max_ite){
         auto prev_ite = instructions_2.prev(ite);
         auto next_ite = instructions_2.next(ite);
         string p;
@@ -276,7 +273,7 @@ int main(){
             mult = 1;
         else if (inverted_pattern.find(p)!=inverted_pattern.end())
             mult = -1;
-        if(mult==1){
+        if(mult){
             if(prev_ite->second>next_ite->second){
                 prev_ite->second -= next_ite->second;
                 ret_2 += mult*next_ite->second*ite->second;
@@ -291,12 +288,18 @@ int main(){
                 ite = instructions_2.erase(prev_ite);
                 ite = instructions_2.prev(instructions_2.erase(instructions_2.next(ite)));
             }
-            ite = collaspe(ite,instructions_2);
-            ite = collaspe(instructions_2.next(ite),instructions_2);
+            if(instructions_2.size()>4){
+                ite = collaspe(ite,instructions_2);
+                ite = collaspe(instructions_2.next(ite),instructions_2);
+            }
+            else{
+                auto b = 0;
+            }
         } else{
             ++ite;
         }
         ++index;
     }
+    cout << "Part 2  " << ret_2 << endl;
     return 0;
 }

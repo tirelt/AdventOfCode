@@ -18,6 +18,17 @@ using std::list;
 using std::map;
 using std::function;
 using std::vector;
+using std::pair;
+using std::array;
+
+struct Rule{
+    Rule(const string l,const string op,int  n,const string ou):letter(l),ope(op),number(n),out(ou){}
+    Rule(const Rule& r):letter(r.letter),ope(r.ope),number(r.number),out(r.out){}
+    string letter;
+    string ope;
+    int number;
+    string out;
+};
 
 struct Workflow{
     Workflow() = default;
@@ -25,7 +36,26 @@ struct Workflow{
     string name;
     string default_case;
     list<function<string (map<string,int>)>> rules;
+    list<Rule> rules_str;
 };
+
+using Part_range = map<string,pair<int,int>>;
+
+bool non_empty(const Part_range& part_range){
+    return (part_range.at("x").first+2) < part_range.at("x").second &&
+           (part_range.at("m").first+2) < part_range.at("m").second &&
+           (part_range.at("a").first+2) < part_range.at("a").second &&
+           (part_range.at("s").first+2) < part_range.at("s").second;
+}
+
+long long size(const Part_range& part_range){
+    long long ret = (part_range.at("x").second - part_range.at("x").first - 1);
+    ret *= (part_range.at("m").second - part_range.at("m").first - 1);
+    ret *= (part_range.at("a").second - part_range.at("a").first - 1);
+    ret *= (part_range.at("s").second - part_range.at("s").first - 1);
+    return ret;
+}
+
 int main(){
     std::ifstream file("input");
     regex pattern_1(R"((\w+|<|>|\d+))");
@@ -48,6 +78,7 @@ int main(){
                 else
                     return part[letter]>number?out:"";
                 });
+            w.rules_str.emplace_back(letter,ope,number,out);
         }
         workflows[args[0]] = w;
     }
@@ -77,5 +108,45 @@ int main(){
             }
         }
     }
+    cout << "Part 1: " <<ret_1 << endl;
+
+    Part_range part_range = {{"x",{0,4001}},{"m",{0,4001}},{"a",{0,4001}},{"s",{0,4001}}};
+    
+    list<pair<Workflow,Part_range>> queue{{workflows["in"],part_range}};
+    list<Part_range> accepted_ranges;
+    while(queue.size()){
+        auto [workflow,part_range] = queue.front();
+        queue.pop_front();
+        Part_range default_range(part_range);
+        Part_range new_part_range(part_range);
+        for(const auto& rule:workflow.rules_str){
+            if(rule.ope =="<"){
+                new_part_range[rule.letter].second = std::min(rule.number,new_part_range[rule.letter].second);
+                default_range[rule.letter].first = std::max(rule.number-1,new_part_range[rule.letter].first);
+            }
+            if(rule.ope ==">"){
+                new_part_range[rule.letter].first = std::max(rule.number,new_part_range[rule.letter].first);
+                default_range[rule.letter].second = std::min(rule.number+1,new_part_range[rule.letter].second);
+            }
+            if(rule.out != "R" && non_empty(new_part_range)){
+                if(rule.out == "A" )
+                    accepted_ranges.push_back(new_part_range);
+                else
+                    queue.push_back({workflows[rule.out],new_part_range});
+            }
+            new_part_range = default_range;
+        }
+        if(workflow.default_case != "R" && non_empty(default_range)){
+            if(workflow.default_case == "A" )
+                accepted_ranges.push_back(default_range);
+            else
+                queue.push_back({workflows[workflow.default_case],default_range});
+        }
+    }
+    long long ret_2 = 0;
+    for(const auto accepted_range:accepted_ranges){
+        ret_2 += size(accepted_range);
+    }
+    cout << "Part 2: " << ret_2 << endl;
     return 0;
 }

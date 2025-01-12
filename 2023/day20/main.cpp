@@ -23,8 +23,6 @@ using std::pair;
 using std::map;
 using std::vector;
 
-//enum class Pulse {high,low};
-
 struct Pulse{
     enum State {high,low};
     Pulse(const string f,const State s,const string t):from(f),state(s),to(t){}
@@ -133,21 +131,17 @@ int main(){
     long long total_lows = 0, total_highs = 0;
     vector<int> primes;
     for(int i=1;i<5000;++i){
-        map<string,pair<int,int>> number_received;
         Module::queue.emplace_back("button",Pulse::low,"broadcaster");
         int lows = 0, highs = 0;
         while(Module::queue.size()){
             const auto p =  Module::queue.front();
-            if(p.state==Pulse::high){
+            if(p.state==Pulse::high)
                 ++highs;
-            }else{
-                ++number_received[p.to].first;
+            else
                 ++lows;
-            } 
             if(p.to=="lb" && p.state == Pulse::high){
                 primes.push_back(i);
             }
-            //cout << p.from << " " << (p.state==Pulse::high?"high":"low") << " " << p.to <<endl;
             Module::queue.pop_front();
             if(modules_map.find(p.to)!=modules_map.end()){
                 modules_map.at(p.to)->send_pulse(p);
@@ -155,9 +149,6 @@ int main(){
         }
         total_lows += lows;
         total_highs += highs;
-        //cout << "low: " << lows << " " <<"high: " << highs << endl;
-        cout << endl;
-        cout << endl;
     }
     long long ret_1 = total_lows * total_highs;
     cout << "Part 1: " << ret_1 << endl;
@@ -173,6 +164,7 @@ int main(){
     N = 0 mod 4079
     given the mod are coprime, N = 3877 * 3911 * 4057 * 4079.
     */
+
     long long ret_2 = 1;
     for(const auto& p:primes) ret_2 *= p;
     cout << "Part 2: " << ret_2 << endl;

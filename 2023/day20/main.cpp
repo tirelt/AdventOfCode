@@ -131,13 +131,23 @@ int main(){
         }
     }
     long long total_lows = 0, total_highs = 0;
-    for(int i=0;i<1000;++i){
+    vector<int> primes;
+    for(int i=1;i<5000;++i){
+        map<string,pair<int,int>> number_received;
         Module::queue.emplace_back("button",Pulse::low,"broadcaster");
         int lows = 0, highs = 0;
         while(Module::queue.size()){
             const auto p =  Module::queue.front();
-            if(p.state==Pulse::high) ++highs; else ++lows;
-            cout << p.from << " " << (p.state==Pulse::high?"high":"low") << " " << p.to <<endl;
+            if(p.state==Pulse::high){
+                ++highs;
+            }else{
+                ++number_received[p.to].first;
+                ++lows;
+            } 
+            if(p.to=="lb" && p.state == Pulse::high){
+                primes.push_back(i);
+            }
+            //cout << p.from << " " << (p.state==Pulse::high?"high":"low") << " " << p.to <<endl;
             Module::queue.pop_front();
             if(modules_map.find(p.to)!=modules_map.end()){
                 modules_map.at(p.to)->send_pulse(p);
@@ -146,9 +156,25 @@ int main(){
         total_lows += lows;
         total_highs += highs;
         //cout << "low: " << lows << " " <<"high: " << highs << endl;
+        cout << endl;
+        cout << endl;
     }
     long long ret_1 = total_lows * total_highs;
     cout << "Part 1: " << ret_1 << endl;
-    cout << "Part 2: " << 0 << endl;
+
+    /*
+    Empiric solution:
+    We remark lb receive from 4 inputs and it gets high pusle at i = 3877,3911,4057,4079 and then at
+    i = 7754,7822,8814,8158 and so on and so forth.
+    Number of push N such as all the inputs send high should be such as
+    N = 0 mod 3877
+    N = 0 mod 3911
+    N = 0 mod 4057
+    N = 0 mod 4079
+    given the mod are coprime, N = 3877 * 3911 * 4057 * 4079.
+    */
+    long long ret_2 = 1;
+    for(const auto& p:primes) ret_2 *= p;
+    cout << "Part 2: " << ret_2 << endl;
     return 0;
 }

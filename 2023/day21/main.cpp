@@ -43,7 +43,23 @@ int main(){
     set<pair<int,int>> visited_even{{i_0,j_0}};
     set<pair<int,int>> visited_odd;
     int max_depth = 64;
-    while(queue.size() && queue.front().second<max_depth){
+    int depth_part1 = 64;
+    int ret_1 = 0;
+    bool locked = false;
+
+    int depth_65 = 65;
+    int ret_65_steps = 0;
+    bool locked_65 = false;
+
+    while(queue.size()){
+        if(!locked && queue.front().second==depth_part1){
+            ret_1 = depth_part1%2?visited_odd.size():visited_even.size();
+            locked = true;
+        }
+        if(!locked_65 && queue.front().second==depth_65){
+            ret_65_steps = depth_65%2?visited_odd.size():visited_even.size();
+            locked_65 = true;
+        }
         const auto [coord,d] = queue.front();
         const auto [k,l] = coord;
         queue.pop_front();
@@ -62,8 +78,17 @@ int main(){
             }
         }
     }
-    int ret_1 = max_depth%2?visited_odd.size():visited_even.size();
+    int ret_total_odd = visited_odd.size();
+    int input_part_2 = 26501365;
+    int number_of_garden_radius = (26501365-65)/131; // there are this number of garden right/left/down/up
+    long long number_of_garden_area = 1 + number_of_garden_radius * (number_of_garden_radius+1)*2;
+
+    long long ret_2 = number_of_garden_area * ret_total_odd - (ret_total_odd - 3459);
+
     cout << "Part 1: " << ret_1 << endl;
-    cout << "Part 2: " << 0 << endl;
+    cout << "Part 2: " << ret_2 << endl;
+
+    // 1809101443655 too low 
+
     return 0;
 }

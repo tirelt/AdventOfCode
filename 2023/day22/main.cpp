@@ -5,12 +5,14 @@
 #include <map>
 #include <vector>
 #include <regex>
+#include <list>
 
 using std::cout;
 using std::endl;
 using std::string;
 using std::map;
 using std::vector;
+using std::list;
 using std::regex;
 using std::smatch;
 using std::regex_search;
@@ -71,33 +73,26 @@ int main(){
         }
     }
     grid.sort();
+    int shift = 0;
     for(int i=0;i<grid.size();++i){
         if(grid[i]->z_min>1){
-            for(int j=i-1;j>=-1;--j){
-                if(j>-1){
-                    //grid[j]->z_max > grid[j+1]->z_min ||
-                    if((grid[j]->x_min > grid[j+1]->x_max || grid[j]->x_max < grid[j+1]->x_min ) || (grid[j]->y_min > grid[j+1]->y_max || grid[j]->y_max < grid[j+1]->y_min )){
-                        auto temp = grid[j];
-                        grid[j] = grid[j+1];
-                        grid[j+1] = temp;
-                    } else{ //collision
-                        int shift = grid[j+1]->z_min - grid[j]->z_max - 1;
-                        grid[j+1] -> z_min -= shift;
-                        grid[j+1] -> z_max -= shift;
-                        grid[j+1]->supported_by.push_back(grid[j]);
-                        for(int k=j-1;k>=0;--k){
-                            if(grid[j]->z_max == grid[k]->z_max && !((grid[k]->x_min > grid[j+1]->x_max || grid[k]->x_max < grid[j+1]->x_min ) || (grid[k]->y_min > grid[j+1]->y_max || grid[k]->y_max < grid[j+1]->y_min ))){
-                                grid[j+1]->supported_by.push_back(grid[k]);
-                            }
-                        }
-                        break;
-                    }
-                } else{
-                    int shift = grid[j+1]->z_min - 1;
-                    grid[j+1] -> z_min -= shift;
-                    grid[j+1] -> z_max -= shift;
+            map<int,list<Brick*>> height_collision;
+            for(int j=i-1;j>=0;--j){
+                if(!(grid[j]->x_min > grid[i]->x_max || grid[j]->x_max < grid[i]->x_min || grid[j]->y_min > grid[i]->y_max || grid[j]->y_max < grid[i]->y_min )){
+                    height_collision[grid[j]->z_max].push_back(grid[j]);
                 }
             }
+            if(height_collision.size()){
+                const auto& [z_collision,supported_by] = *height_collision.rbegin();
+                for(const auto& b:supported_by){
+                    grid[i]->supported_by.push_back(b);
+                }
+                shift = grid[i]->z_min - z_collision - 1;
+            } else{
+                shift = grid[i]->z_min - 1;
+            }
+            grid[i] -> z_min -= shift;
+            grid[i] -> z_max -= shift; 
         }
     }
     map<int,bool> safe_brick;
@@ -119,8 +114,6 @@ int main(){
     //when it touches need to check if it touches other.
     cout << "Part 1: " << ret_1 << endl;
     cout << "Part 2: " << 0 << endl;
-    //256 too low
-    //823 too high
 
     vector<vector<vector<int >>> plan(10,vector<vector<int>>(10,vector<int>(100,0)));
     for(int i=0;i<grid.size();++i){
@@ -128,19 +121,12 @@ int main(){
             for(int y = grid[i]->y_min;y<=grid[i]->y_max;++y){
                 for(int z = grid[i]->z_min;z<=grid[i]->z_max;++z){
                     if(plan[x][y][z]!=0)
-                        auto a = 1; //collision ??
+                        auto a = 1; //collision ??  845 into 444
                     else
                         plan[x][y][z] = grid[i]->label;
                 }
             }
         }
-    }
-    std::ofstream out("output");
-    for(int x=0;x<10;++x){
-        for(int y=0;y<10;++y){
-            out << plan[x][y][1];
-        }
-        out <<endl;
     }
     return 0;
 }

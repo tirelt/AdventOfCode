@@ -6,6 +6,7 @@
 #include <vector>
 #include <regex>
 #include <list>
+#include <set>
 
 using std::cout;
 using std::endl;
@@ -16,6 +17,7 @@ using std::list;
 using std::regex;
 using std::smatch;
 using std::regex_search;
+using std::set;
 
 struct Brick{
     Brick(const int& x_mi,const int& x_ma,const int& y_mi,const int& y_ma,const int& z_mi,const int& z_ma,const int& l):x_min(x_mi),x_max(x_ma),y_min(y_mi),y_max(y_ma),z_min(z_mi),z_max(z_ma),label(l){}
@@ -26,8 +28,8 @@ struct Brick{
     int z_min;
     int z_max;
     int label;
-    vector<Brick* > supported_by;
-
+    list<Brick* > supported_by;
+    list<Brick* > supports;
 };
 
 bool compBrickPtr(const Brick* b, const Brick* p){
@@ -59,10 +61,26 @@ struct Grid{
     }
 };
 
+int check_would_fall(Brick* brick,set<int> would_fall){
+    for(const auto& b:brick->supports){
+        bool fall = true;
+        for(const auto& s:b->supported_by){
+            if(would_fall.find(s->label)==would_fall.end()){
+                fall = false;
+                break;
+            }
+        }
+        if(fall){
+            would_fall.insert(b->label);
+            check_would_fall(b,would_fall);
+        }
+    }
+}
+
 int Grid::label = 0;
 
 int main(){
-    std::ifstream file("input");
+    std::ifstream file("test_input");
     std::regex pattern(R"((\d+),(\d+),(\d+)~(\d+),(\d+),(\d+))"); 
     std::smatch matches;
     string line;
@@ -86,6 +104,7 @@ int main(){
                 const auto& [z_collision,supported_by] = *height_collision.rbegin();
                 for(const auto& b:supported_by){
                     grid[i]->supported_by.push_back(b);
+                    b->supports.push_back(grid[i]);
                 }
                 shift = grid[i]->z_min - z_collision - 1;
             } else{
@@ -101,32 +120,29 @@ int main(){
     }
     for(int i=0;i<grid.size();++i){
         if(grid[i]->supported_by.size()==1){
-            safe_brick[grid[i]->supported_by[0]->label] = false;
+            safe_brick[grid[i]->supported_by.front()->label] = false;
         }
     }
     int ret_1=0;
+    map<int,set<int>> would_fall;
     for(const auto [l,safe]:safe_brick){
-        if(safe)
+        if(safe){
             ++ret_1;
+        }
     }
-    grid.sort();
+    set<int> res_set;
+    int ret_2=0;
+    for(int i=0;i<grid.size();++i){
+        if(!safe_brick[grid[i]->label]){
+            res_set = {grid[i]->label};
+            check_would_fall(grid[i],res_set);
+            ret_2 += res_set.size();
+        }
+    }
     //for each brick need to check brick with smaller min_z to see if we can move it lower (i.e. smaller index in bricks). if they touch z_min = z_max +1. 
     //when it touches need to check if it touches other.
     cout << "Part 1: " << ret_1 << endl;
-    cout << "Part 2: " << 0 << endl;
+    cout << "Part 2: " << ret_2 << endl;
 
-    vector<vector<vector<int >>> plan(10,vector<vector<int>>(10,vector<int>(100,0)));
-    for(int i=0;i<grid.size();++i){
-        for(int x = grid[i]->x_min;x<=grid[i]->x_max;++x){
-            for(int y = grid[i]->y_min;y<=grid[i]->y_max;++y){
-                for(int z = grid[i]->z_min;z<=grid[i]->z_max;++z){
-                    if(plan[x][y][z]!=0)
-                        auto a = 1; //collision ??  845 into 444
-                    else
-                        plan[x][y][z] = grid[i]->label;
-                }
-            }
-        }
-    }
     return 0;
 }

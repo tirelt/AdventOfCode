@@ -7,6 +7,7 @@
 #include <regex>
 #include <list>
 #include <set>
+#include <queue>
 
 using std::cout;
 using std::endl;
@@ -18,6 +19,7 @@ using std::regex;
 using std::smatch;
 using std::regex_search;
 using std::set;
+using std::priority_queue;
 
 struct Brick{
     Brick(const int& x_mi,const int& x_ma,const int& y_mi,const int& y_ma,const int& z_mi,const int& z_ma,const int& l):x_min(x_mi),x_max(x_ma),y_min(y_mi),y_max(y_ma),z_min(z_mi),z_max(z_ma),label(l){}
@@ -35,6 +37,11 @@ struct Brick{
 bool compBrickPtr(const Brick* b, const Brick* p){
     return b->z_min<p->z_min;
 }
+struct CustomComparator{ 
+    bool operator()(const Brick* b, const Brick* p) const{ 
+        return b->z_min>p->z_min;; // Custom comparison logic, here it's in descending order 
+    } 
+};
 
 struct Grid{
     vector<Brick* > bricks;
@@ -61,26 +68,34 @@ struct Grid{
     }
 };
 
-int check_would_fall(Brick* brick,set<int> would_fall){
-    for(const auto& b:brick->supports){
-        bool fall = true;
-        for(const auto& s:b->supported_by){
-            if(would_fall.find(s->label)==would_fall.end()){
-                fall = false;
-                break;
+int check_would_fall(Brick* init_brick){
+    priority_queue<Brick*, std::vector<Brick*>, CustomComparator> queue;
+    queue.push(init_brick);
+    set<int> falling{init_brick->label};
+    while(queue.size()){
+        const auto brick = queue.top();
+        queue.pop();
+        for(const auto& b:brick->supports){
+            bool fall = true;
+            for(const auto& s:b->supported_by){
+                if(falling.find(s->label)==falling.end()){
+                    fall = false;
+                    break;
+                }
+            }
+            if(fall){
+                falling.insert(b->label);
+                queue.push(b);
             }
         }
-        if(fall){
-            would_fall.insert(b->label);
-            check_would_fall(b,would_fall);
-        }
     }
+    return falling.size() - 1;
 }
 
 int Grid::label = 0;
 
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     std::regex pattern(R"((\d+),(\d+),(\d+)~(\d+),(\d+),(\d+))"); 
     std::smatch matches;
     string line;
@@ -95,7 +110,7 @@ int main(){
     for(int i=0;i<grid.size();++i){
         if(grid[i]->z_min>1){
             map<int,list<Brick*>> height_collision;
-            for(int j=i-1;j>=0;--j){
+            for(int j=i-1;j>=0;--j){ // can optimize by checking chunk of Bricks by decreasing z_max but yolo
                 if(!(grid[j]->x_min > grid[i]->x_max || grid[j]->x_max < grid[i]->x_min || grid[j]->y_min > grid[i]->y_max || grid[j]->y_max < grid[i]->y_min )){
                     height_collision[grid[j]->z_max].push_back(grid[j]);
                 }
@@ -130,17 +145,13 @@ int main(){
             ++ret_1;
         }
     }
-    set<int> res_set;
+    set<Brick*,CustomComparator> falling_bricks;
     int ret_2=0;
     for(int i=0;i<grid.size();++i){
         if(!safe_brick[grid[i]->label]){
-            res_set = {grid[i]->label};
-            check_would_fall(grid[i],res_set);
-            ret_2 += res_set.size();
+            ret_2 += check_would_fall(grid[i]); // can optimize by saving some result but yolo
         }
     }
-    //for each brick need to check brick with smaller min_z to see if we can move it lower (i.e. smaller index in bricks). if they touch z_min = z_max +1. 
-    //when it touches need to check if it touches other.
     cout << "Part 1: " << ret_1 << endl;
     cout << "Part 2: " << ret_2 << endl;
 

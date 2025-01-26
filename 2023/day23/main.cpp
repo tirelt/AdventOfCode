@@ -5,6 +5,8 @@
 #include <vector>
 #include <list>
 #include <map>
+#include <set>
+#include <algorithm>
 
 using std::cout;
 using std::endl;
@@ -13,6 +15,8 @@ using std::vector;
 using std::list;
 using std::pair;
 using std::map;
+using std::set;
+using std::find;
 
 struct Position{
     Position(const pair<int,int> c, const pair<int,int> f, const int s):coord(c),from(f),steps(s){}
@@ -20,6 +24,44 @@ struct Position{
     pair<int,int> from;
     int steps;
 };
+
+struct Vertex{
+    Vertex(const pair<int,int> c):coord(c){}
+    pair<int,int> coord;
+    list<pair<Vertex*,int>> connected_to;
+};
+
+struct Vertices{
+    map<pair<int,int>,Vertex*> vertices;
+    ~Vertices(){
+        for(auto& [c,v]:vertices){
+            delete v;
+            v = nullptr;
+        }
+    }
+};
+
+void dfs(pair<int,int> coord,set<pair<int,int>>& seen,vector<vector<char>>& forest,Vertices& v){
+    list<pair<pair<int,int>,int>> queue{{coord,0}};
+    int dist = 0;
+    while(queue.size()){
+        const auto [head,dist] = queue.front();
+        queue.pop_front();
+        list<pair<int,int>> possible_next{{head.first-1,head.second},{head.first+1,head.second},{head.first,head.second-1},{head.first,head.second+1}};
+        for(const auto& [i,j]:possible_next){
+            if(i>=0&&i<forest.size()&&j>=0&&j<forest[0].size()&&forest[i][j]!='#'){
+                const auto ret_insert = seen.insert({i,j});
+                if((coord.first!=i||coord.second!=j) && v.vertices.find({i,j})!=v.vertices.end()){
+                    v.vertices[coord]->connected_to.emplace_back(v.vertices[{i,j}],dist+1);
+                    v.vertices[{i,j}]->connected_to.emplace_back(v.vertices[coord],dist+1);
+                } else if(ret_insert.second){
+                    queue.push_back({{i,j},dist+1});
+                }
+        
+            }
+        }
+    }
+}
 
 int main(){
     /*
@@ -41,6 +83,9 @@ int main(){
     map<pair<int,int>,int> forks;
     Position pos = Position({1,1},{0,1},1);
     list<Position> queue{pos}; //start one step in to avoid checking out of bounds
+    Vertices v;
+    v.vertices[{0,1}] = new Vertex({0,1});
+    v.vertices[{forest.size()-1,forest.size()-2}] = new Vertex({forest.size()-1,forest.size()-2});
     while(queue.size()){
         pos = queue.front();
         queue.pop_front();
@@ -59,8 +104,13 @@ int main(){
             if(forest[next_coord.first][next_coord.second]=='>' && next_coord.second<pos.coord.second)
                 ++incoming;
         }
-        if(incoming>1){
-            auto a = 1;
+        int incoming_part2 = 0;
+        for(const auto& next_coord:next_coords){
+            if(forest[next_coord.first][next_coord.second]!='#')
+                ++incoming_part2;
+        }
+        if(incoming_part2>2){
+            v.vertices[pos.coord] = new Vertex(pos.coord);
         }
         if(incoming < 2 || ++forks[pos.coord]==incoming){
             list<Position> queue_temp;
@@ -95,7 +145,16 @@ int main(){
     }
     int ret_1 = pos.steps;
     cout << "Part 1: " << ret_1 << endl;
-    cout << "Part 2: " << 0 << endl;
 
+    set<pair<int,int>> seen;
+    int number_edges = 0;
+    for(const auto& [c,v_ptr]:v.vertices){
+        seen.insert(c);
+        dfs(c,seen,forest,v);
+        number_edges += v.vertices[c]->connected_to.size();
+    }
+    number_edges/=2;
+
+    cout << "Part 2: " << 0 << endl;
     return 0;
 }

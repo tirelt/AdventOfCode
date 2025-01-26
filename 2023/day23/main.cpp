@@ -41,7 +41,7 @@ struct Vertices{
     }
 };
 
-void dfs(pair<int,int> coord,set<pair<int,int>>& seen,vector<vector<char>>& forest,Vertices& v){
+void wfs(pair<int,int> coord,set<pair<int,int>>& seen,vector<vector<char>>& forest,Vertices& v){
     list<pair<pair<int,int>,int>> queue{{coord,0}};
     int dist = 0;
     while(queue.size()){
@@ -61,6 +61,21 @@ void dfs(pair<int,int> coord,set<pair<int,int>>& seen,vector<vector<char>>& fore
             }
         }
     }
+}
+
+int dfs_stupid(pair<int,int> coord,Vertices& v,set<pair<int,int>> seen,int dist,const pair<int,int>& coord_final){
+    if(coord==coord_final){
+        return dist;
+    }
+    int ret = -1000000;
+    for(const auto [next,d]:v.vertices[coord]->connected_to){
+        auto temp_set = seen;
+        const auto ret_insert = temp_set.insert(next->coord);
+        if(ret_insert.second){
+            ret = std::max(ret,dfs_stupid(next->coord,v,temp_set,dist+d,coord_final));
+        }
+    }
+    return ret;
 }
 
 int main(){
@@ -83,9 +98,11 @@ int main(){
     map<pair<int,int>,int> forks;
     Position pos = Position({1,1},{0,1},1);
     list<Position> queue{pos}; //start one step in to avoid checking out of bounds
+    
+    const pair<int,int> coord_final = {forest.size()-1,forest.size()-2};
     Vertices v;
     v.vertices[{0,1}] = new Vertex({0,1});
-    v.vertices[{forest.size()-1,forest.size()-2}] = new Vertex({forest.size()-1,forest.size()-2});
+    v.vertices[coord_final] = new Vertex(coord_final);
     while(queue.size()){
         pos = queue.front();
         queue.pop_front();
@@ -150,11 +167,12 @@ int main(){
     int number_edges = 0;
     for(const auto& [c,v_ptr]:v.vertices){
         seen.insert(c);
-        dfs(c,seen,forest,v);
+        wfs(c,seen,forest,v);
         number_edges += v.vertices[c]->connected_to.size();
     }
     number_edges/=2;
-
-    cout << "Part 2: " << 0 << endl;
+    
+    int ret_2 = dfs_stupid({0,1},v,{{0,1}},0,coord_final);
+    cout << "Part 2: " << ret_2 << endl;
     return 0;
 }

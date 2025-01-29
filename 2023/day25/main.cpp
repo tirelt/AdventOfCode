@@ -6,6 +6,7 @@
 #include <regex>
 #include <map>
 #include <set>
+#include <list>
 
 using std::cout;
 using std::endl;
@@ -15,6 +16,8 @@ using std::regex;
 using std::map;
 using std::set;
 using std::sregex_iterator;
+using std::list;
+
 
 struct Component{
     Component(){}
@@ -48,20 +51,28 @@ int main(){
             
         }
     }
-    Component head = components.begin()->second;
+    Component head = components["skp"];
     set<string> seen{head.name};
     map<string,int> connection_count;
     std::pair<string,int> current_highest{head.name,0};
-    std::pair<string,int> second_highest{head.name,0};
+    int counter = 0;
+    list<string> queue;
     do{
     for(const auto& connected:head.connected_to){
         if(seen.find(connected->name)==seen.end()){
-            if(++connection_count[connected->name]>current_highest.second){
-                second_highest = current_highest;
-                current_highest = {connected->name,connection_count[connected->name]};
-
-            }
+            ++connection_count[connected->name];
+            queue.push_back(connected->name);
         }
+    }
+    current_highest = *connection_count.begin();
+    for(const auto& c:connection_count){
+        if(c.second>current_highest.second){
+            current_highest = c;
+        }
+    }
+    if(current_highest.second==1){
+        current_highest.first=queue.front();
+        queue.pop_front();
     }
     head = components[current_highest.first];
     seen.insert(current_highest.first);

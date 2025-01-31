@@ -18,49 +18,100 @@ using std::map;
 using std::set;
 using std::sregex_iterator;
 using std::list;
-
+using std::to_string;
 using std::random_device;
 using std::mt19937;
 using std::uniform_int_distribution;
 using std::advance;
 
-struct Component{
-    Component(){}
-    Component(const string& s):name(s){}
-    string name;
-    vector<Component*> connected_to;
-    vector<string> edges;
-    
+struct Edge{
+    Edge(const string& s_1,const string& s_2):node_1(s_1),node_2(s_2){}
+    string node_1;
+    string node_2;
+    string value()const{
+        if(node_1>node_2)
+            return node_2 + node_1;
+        else 
+            return node_1 + node_2;
+    }
 };
 
-void karger_algo(map<string,Component>& components){
-    random_device rd;
-    int index_1,index_2;
-    mt19937 gen(rd());
-    while(components.size()>2){
-        uniform_int_distribution<> distr(0,components.size()-1);
-        index_1 = distr(gen);
-        index_2 = distr(gen);
-        while(index_1==index_2){
-            index_2 = distr(gen);
-        }
-        auto it = components.begin();
-        advance(it,index_1);
-        Component node_1 = it->second;
+bool operator<(const Edge& e_1,const Edge& e_2){
+    return e_1.value() < e_2.value();
+}
 
-        auto it = components.begin();
-        advance(it,index_2);
-        Component node_2 = it->second;
-
-        
-        for(const auto c:node_1.connected_to){
-            for(const auto v:c->connected_to){
-                if(v->name==node_1.name){
-                    v = ;
-                }
+struct Component{
+    Component(){}
+    Component(const string& s):nodes({s}),name(s){}
+    Component(const Component *c):name(c->name),nodes(c->nodes),edges(c->edges),connected_to(c->connected_to){}
+    Component(const string& n,Component* c_1,Component* c_2):name(n),nodes(c_1->nodes){
+        for(auto& connected:c_1->connected_to){
+            if(connected.first!=n){
+                connected.second->connected_to[n] = this;
+                connected.second->connected_to.erase(c_1->name);
             }
         }
-        
+        for(auto& connected:c_2->connected_to){
+            if(connected.first!=n){
+                connected.second->connected_to[n] = this;
+                connected.second->connected_to.erase(c_2->name);
+            }
+        }
+        for(const auto& node:c_2->nodes)
+            nodes.insert(node);
+        for(const auto& c:c_1->connected_to)
+            if(c.first != n && c.first != c_2->name) connected_to[c.first]=c.second;
+        for(const auto& c:c_2->connected_to)
+            if(c.first != n && c.first != c_1->name) connected_to[c.first]=c.second;
+        for(const auto& edge:c_1->edges){
+            if(nodes.find(edge.node_1)==nodes.end()||nodes.find(edge.node_2)==nodes.end())
+                edges.insert(edge);
+        }
+        for(const auto& edge:c_2->edges){
+            if(nodes.find(edge.node_1)==nodes.end()||nodes.find(edge.node_2)==nodes.end())
+                edges.insert(edge);
+        }
+    }
+    string name;
+    set<string> nodes;
+    set<Edge> edges;
+    map<string,Component*> connected_to;    
+};
+
+bool isNumber(const std::string& str) {
+    for (char const &c : str) {
+        if (!std::isdigit(c)) return false;
+    }
+    return true;
+}
+
+void karger_algo(map<string,Component*>& components){
+    Component *node_1,*node_2;
+    random_device rd;
+    int index;
+    mt19937 gen(rd());
+    int counter = 0;
+    while(components.size()>2){
+        {
+            uniform_int_distribution<> distr(0,components.size()-1);
+            index = distr(gen);
+            auto it = components.begin();
+            advance(it, index);
+            node_1 = it->second;
+            components.erase(it);
+        }
+        {
+            uniform_int_distribution<> distr(0,components.size()-1);
+            index = distr(gen);
+            auto it = components.begin();
+            advance(it, index);
+            node_2 = it->second;
+            components.erase(it);
+        };
+        string new_name = to_string(counter++);
+        components[new_name] = new Component(new_name,node_1,node_2);
+        delete node_1;
+        delete node_2;
     }
 }
 
@@ -70,75 +121,43 @@ int main(){
     std::smatch matches;
     string line;
     string first = "";
-    map<string,Component> components;
+    map<string,Component*> components;
     while(getline(file,line)){
         first = "";
         for(sregex_iterator it(line.begin(), line.end(), pattern), end_it;it != end_it; ++it){
             if(!first.size()){
                 first = it->str();
                 if(components.find(first)==components.end()){
-                    components[first] = Component(first);
+                    components[first] = new Component(first);
                 }
             } else{
                 string name = it->str();
                 if(components.find(name)==components.end()){
-                    components[name] = Component(name);
+                    components[name] = new Component(name);
                 }
-                components[first].connected_to.push_back(&components[name]);
-                components[first].edges.push_back(first+"-"+name);
-                components[name].connected_to.push_back(&components[first]);
-                components[name].edges.push_back(first+"-"+name);
-            }
-            
+                Edge e(first,name);
+                components[first]->connected_to[name]=components[name];
+                components[first]->edges.insert(e);
+                components[name]->connected_to[first]=components[first];
+                components[name]->edges.insert(e);
+            }    
         }
     }
-    vector<int> connections;
-    for(auto const& c:components){
-        connections.push_back(c.second.connected_to.size());
-    }
-    std::sort(connections.begin(),connections.end());
-    Component head = components.begin()->second;//components["kpl"];
-    set<string> seen{head.name};
-    map<string,int> connection_count;
-    /*
-    set<string> seen{"bbb","cqs","vss"};
-    for(auto const& s:seen){
-        for(const auto& connected:components[s].connected_to){
-            ++connection_count[connected->name];
+    int target = 0;
+    while(target!=3){
+        map<string,Component*> components_bis;
+        for(const auto& c:components){
+            components_bis[c.first]= new Component(c.second);
         }
+        karger_algo(components_bis);
+        target = components_bis.begin()->second->edges.size();
+        cout << "Section: " << target << endl;
+        auto t =1;
     }
-*/
-    std::pair<string,int> current_highest{head.name,0};
-    int counter = 0;
-    list<string> queue;
-    do{
-    for(const auto& connected:head.connected_to){
-        if(seen.find(connected->name)==seen.end()){
-            ++connection_count[connected->name];
-            if(connection_count[connected->name]>current_highest.second){
-                current_highest = {connected->name,connection_count[connected->name]};
-            }
-            queue.push_back(connected->name);
-            
-        }
-    }
-    /*
-    current_highest = *connection_count.begin();
-    for(const auto& c:connection_count){
-        if(c.second>current_highest.second){
-            current_highest = c;
-        }
-    }
-    */
-    /*
-    if(current_highest.second==1){
-        current_highest.first=queue.front();
-        queue.pop_front();
-    }*/
-    head = components[current_highest.first];
-    seen.insert(current_highest.first);
-    connection_count.erase(current_highest.first);
-    }while(true);
     cout << "Part 1: " << 0 << endl;
+
+    for(auto& c:components){
+        delete c.second;
+    }
     return 0;
 }

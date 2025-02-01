@@ -1,176 +1,127 @@
-#include <algorithm>
-#include <numeric>
+
 #include <fstream>
 #include <iostream>
-#include <random>
 #include <string>
-#include <string_view>
-#include <stack>
-#include <unordered_set>  
-#include <unordered_map>  
 #include <vector>
+#include <regex>
+#include <map>
+#include <set>
+#include <list>
+#include <random>
 
-// Used Karger's algorithm
-// Also, other algorithms are available
+using std::cout;
+using std::endl;
+using std::string;
+using std::vector;
+using std::regex;
+using std::map;
+using std::set;
+using std::sregex_iterator;
+using std::list;
+using std::random_device;
+using std::mt19937;
 
-struct Edge {
-  std::string start;
-  std::string end;
-  bool operator == (const Edge& e) const{
-    return start == e.start && end == e.end;
-  }
+struct Component{
+    Component(){}
+    Component(const string& s):name(s){}
+    string name;
+    list<Component*> connected_to;    
 };
 
-void parse_input(const std::string& input_str, std::vector<Edge>& edges) {
-  const std::string from = input_str.substr(0, 3);
-  std::size_t start = 5;
-  std::size_t end = input_str.find(' ', start);
-  while (end != std::string::npos) {
-    const std::string to = input_str.substr(start, end - start);
-    start = end + 1;
-    end = input_str.find(' ', start);
-    Edge edge;
-    edge.start = from;
-    edge.end = to;
-    edges.push_back(edge);
-  }
-  const std::string to = input_str.substr(start, input_str.size() - start);
-  Edge edge;
-  edge.start = from;
-  edge.end = to;
-  edges.push_back(edge);
-}
-
-const std::string& UnionFindRCFindUtil(const std::string& v, std::unordered_map<std::string, std::pair<std::string, int>>& subsets){
-  if(v != subsets[v].first) {
-    subsets[v].first = UnionFindRCFindUtil(subsets[v].first, subsets);
-  }
-  return subsets[v].first;
-}
-
-void UnionFindRCUnionUtil(const std::string& v1, const std::string& v2, std::unordered_map<std::string, std::pair<std::string, int>>& subsets) {
-  const auto& p1 = UnionFindRCFindUtil(v1, subsets);
-  const auto& p2 = UnionFindRCFindUtil(v2, subsets);
-
-  if(subsets[p1].second > subsets[p2].second) {
-    subsets[p2].first = p1;
-  } else if(subsets[p1].second < subsets[p1].second) {
-    subsets[p1].first = p2;
-  } else {
-    subsets[p2].first = p1;
-    subsets[p1].second++;
-  }
-}
-
-bool KargersAlgorithm(std::vector<Edge>& edges, 
-                      std::size_t n_vertices,
-                      std::unordered_map<std::string, std::pair<std::string, int>> subsets,
-                      std::vector<Edge>& wires_to_cut) {
-  // Shuffle the order of edges here and then proceed in order instead of randomly choosing edges 
-  static std::random_device dev;
-  static std::mt19937 rng(dev());
-  std::shuffle(edges.begin(), edges.end(), rng);
-
-  int count = edges.size()-1;
-  while (n_vertices > 2) {
-    const auto& edge = edges[count];
-    const auto& p1 = UnionFindRCFindUtil(edge.start, subsets);
-    const auto& p2 = UnionFindRCFindUtil(edge.end, subsets);
-    count--;
-    if (p1 != p2) {
-      UnionFindRCUnionUtil(p1, p2, subsets);
-      n_vertices--;
+struct Vertex{
+    Vertex(const string& s):name(s){}
+    string name;
+    static map<string,string> name_mapping;
+    string& get_name(){
+        string name_1 = name;
+        string name_2 = name_mapping[name];
+        if(name_2 == ""){
+            name_mapping[name] = name;
+        } else{
+            while(name_1 != name_2){
+                name_1 = name_2;
+                name_2 = name_mapping[name_2];
+            }
+            name_mapping[name] = name_2;
+        }
+        return name_mapping[name]; 
     }
-  }
-  int count_without_self_edges = 0;
-  std::vector<int> indices;
-  for (int i = 0; i <= count; i++) {
-    const auto& p1 = UnionFindRCFindUtil(edges[i].start, subsets);
-    const auto& p2 = UnionFindRCFindUtil(edges[i].end, subsets);
-    if (p1 != p2) {
-      count_without_self_edges++;
-      wires_to_cut.push_back(edges[i]);
-      indices.push_back(i);
+};
+
+map<string,string> Vertex::name_mapping;
+
+struct Edge{
+    Edge(const string& s_1,const string& s_2):v_1(s_1),v_2(s_2){}
+    Vertex v_1;
+    Vertex v_2;
+};
+
+void create_components(map<string,Component*>& components,vector<string>& input,vector<Edge>& edges){
+    std::regex pattern(R"(\w{3})"); 
+    string first = "";
+    for(const auto& line:input){
+        first = "";
+        for(sregex_iterator it(line.begin(), line.end(), pattern), end_it;it != end_it; ++it){
+            if(!first.size()){
+                first = it->str();
+                if(components.find(first)==components.end()){
+                    components[first] = new Component(first);
+                }
+            } else{
+                string name = it->str();
+                if(components.find(name)==components.end()){
+                    components[name] = new Component(name);
+                }
+                components[first]->connected_to.push_back(components[name]);
+                components[name]->connected_to.push_back(components[first]);
+                edges.emplace_back(first,name);
+            }    
+        }
     }
-  }
-  
-  // Early breaking condition
-  if (count_without_self_edges == 3) {
-    return true;
-  }
-  wires_to_cut.clear();
-  return false;
 }
 
-int main(int argc, char * argv[]) {
-  std::string input = "input";
-  if (argc > 1) {
-    input = argv[1];
-  }
+bool karger_algo(vector<Edge> edges, int number_vertices,vector<Edge>& to_cut){
+    static random_device dev;
+    static mt19937 rng(dev());
+    std::shuffle(edges.begin(), edges.end(), rng);
+    Vertex::name_mapping.clear();
+    int i = 0;
+    while(number_vertices>2){
+        if(edges[i].v_1.get_name()!=edges[i].v_2.get_name()){
+            Vertex::name_mapping[edges[i].v_1.name]=edges[i].v_2.name;
+            --number_vertices;
+        } else{
+            auto t = 1;
+        }
+        ++i;
+    }
+    to_cut.clear();
+    for(int j=i;j<edges.size();++j){
+        if(edges[j].v_1.get_name()!=edges[j].v_2.get_name()){
+            to_cut.push_back(edges[j]);
+        }
+    }
+}
 
-  std::string line;
-  std::fstream file(input);
-  std::vector<Edge> edges;
-  while(std::getline(file, line)) {
-    parse_input(line, edges);
-  }
-
-  std::unordered_set<std::string> vertices;
-  for (const auto& edge : edges) {
-    vertices.insert(edge.start);
-    vertices.insert(edge.end);
-  }
-  
-  std::vector<Edge> wires_to_cut;
-  std::unordered_map<std::string, std::pair<std::string, int>> subsets;
-  for (const auto& v : vertices) {
-    subsets[v] = {v, 0};
-  }
-  const auto n_vertices = vertices.size();
-  int iteration = 0;
-  while (!KargersAlgorithm(edges, n_vertices, subsets, wires_to_cut)) {
-    // std::cout << "Iteration: " << iteration << '\n';
-    iteration++;
-  }
-  
-  // Remove the 3 wires to cut from the list of edges by 
-  // moving them to the end of the vector and then erasing
-  {
+int main(){
+    std::ifstream file("test_input");
+    string line;
+    vector<string> input;
+    while(getline(file,line)){
+        input.push_back(line);
+    }
+    map<string,Component*> components;
+    vector<Edge> edges;
+    create_components(components,input,edges);
+    int number_vertices = components.size();
+    vector<Edge> to_cut;
     int count = 0;
-    for (const auto& wire : wires_to_cut) {
-      auto it = std::find(std::begin(edges), std::end(edges), wire);
-      auto end_it = edges.end();
-      std::advance(end_it, -(count + 1));
-      std::iter_swap(it, end_it);
-      count++;
-    }
-    auto end_it = edges.end();
-    std::advance(end_it, -count); 
-    edges.erase(end_it, std::end(edges));
-  }
-  
-  // Find all the points connecting to a single (random) point to find one of the disjoint sets
-  std::unordered_map<std::string, std::unordered_set<std::string>> adj_list;
-  for (const auto& e : edges) {
-    adj_list[e.start].insert(e.end);
-    adj_list[e.end].insert(e.start);
-  }
-  std::stack<std::string> stack;
-  stack.push(adj_list.begin()->first);
-  std::unordered_set<std::string> seen;
-  while (!stack.empty()) {
-    const auto current = stack.top();
-    stack.pop();
-    if (seen.find(current) != seen.end()) {
-      continue;
-    }
-    seen.insert(current);
-    for (const auto& ele : adj_list[current]) {
-      if (seen.find(ele) == seen.end()) {
-        stack.push(ele);
-      }
-    }
-  }
-  std::cout << seen.size()  * (vertices.size() - seen.size()) << '\n';
-  return 0;
+    do{
+        ++count;
+        karger_algo(edges,number_vertices,to_cut);
+    } while(to_cut.size()>3);
+
+    cout << "Part 1: " << 0 << endl;
+
+    return 0;
 }

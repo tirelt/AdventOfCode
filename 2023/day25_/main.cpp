@@ -49,17 +49,7 @@ const std::string& UnionFindRCFindUtil(const std::string& v, std::unordered_map<
 }
 
 void UnionFindRCUnionUtil(const std::string& v1, const std::string& v2, std::unordered_map<std::string, std::pair<std::string, int>>& subsets) {
-  const auto& p1 = UnionFindRCFindUtil(v1, subsets);
-  const auto& p2 = UnionFindRCFindUtil(v2, subsets);
-
-  if(subsets[p1].second > subsets[p2].second) {
-    subsets[p2].first = p1;
-  } else if(subsets[p1].second < subsets[p1].second) {
-    subsets[p1].first = p2;
-  } else {
-    subsets[p2].first = p1;
-    subsets[p1].second++;
-  }
+  subsets[v2].first = v1;
 }
 
 bool KargersAlgorithm(std::vector<Edge>& edges, 
@@ -78,7 +68,8 @@ bool KargersAlgorithm(std::vector<Edge>& edges,
     const auto& p2 = UnionFindRCFindUtil(edge.end, subsets);
     count--;
     if (p1 != p2) {
-      UnionFindRCUnionUtil(p1, p2, subsets);
+      subsets[p2].first = p1;
+      //UnionFindRCUnionUtil(p1, p2, subsets);
       n_vertices--;
     }
   }

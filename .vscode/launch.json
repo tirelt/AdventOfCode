@@ -12,6 +12,15 @@
             "args": [],
             "cwd": "${cwd}/2023/day25",
             "preLaunchTask": "Build 2023/day25/main",
+        },
+        {
+            "name": "Debug 2023/day25_/main",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${cwd}/2023/day25_/main",
+            "args": [],
+            "cwd": "${cwd}/2023/day25_",
+            "preLaunchTask": "Build 2023/day25_/main",
         }
 
     ]

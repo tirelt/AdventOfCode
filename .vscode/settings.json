@@ -79,7 +79,8 @@
         "regex": "cpp",
         "ranges": "cpp",
         "cinttypes": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "__config": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }

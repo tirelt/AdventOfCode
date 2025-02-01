@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <list>
 #include <regex>
 #include <map>
 #include <random>
@@ -10,6 +11,7 @@ using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
+using std::list;
 using std::regex;
 using std::map;
 using std::sregex_iterator;
@@ -20,7 +22,6 @@ struct Vertex{
   Vertex(const string& s):name(s){}
   string name;
   Vertex* mapped_to;
-  vector<Vertex*> connected_to;
   string get_name() {
       return (this->update_mapping())->name;
   }
@@ -57,8 +58,6 @@ void create_edges_and_vertices(const string file_name,vector<Edge>& edges,map<st
         if(vertices.find(name)==vertices.end()){
             vertices[name] = new Vertex(name);
         }
-        vertices[first]->connected_to.push_back(vertices[name]);
-        vertices[name]->connected_to.push_back(vertices[first]);
         edges.emplace_back(vertices[first],vertices[name]);
       }    
     }
@@ -89,7 +88,7 @@ void karger_algo(vector<Edge>& edges, int number_vertices,vector<Edge>& to_cut,m
     ++i;
   }
   for(int j=i;j<edges.size();++j){
-    if(edges[j].v_1->get_name()!= edges[j].v_2->get_name())
+    if(edges[j].v_1->get_name() != edges[j].v_2->get_name())
         to_cut.push_back(edges[j]);
   }    
 }
@@ -107,7 +106,15 @@ int main(){
     karger_algo(edges,number_vertices,to_cut,vertices);
   } while(to_cut.size()>3);
 
-  cout << "Part 1: " << 0 << endl;
+  map<string,int> counter;
+  for(auto& v:vertices){
+    ++counter[v.second->get_name()];
+  }
+  int ret_1 = 1;
+  for(const auto p:counter){
+    ret_1*=p.second;
+  }
+  cout << "Part 1: " << ret_1 << endl;
 
   //deallocates memory
   for(auto& [name,v_ptr]:vertices){

@@ -1,39 +1,27 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <map>
 
 using std::string;
 using std::cout;
 using std::endl;
-
+using std::map;
 
 int main(){
     std::ifstream file("input");
+    map<char,map<char,int>> score = {
+        {'A', {{'X', 1+3}, {'Y', 2+6}, {'Z', 3+0}}},
+        {'B', {{'X', 1+0}, {'Y', 2+3}, {'Z', 3+6}}},
+        {'C', {{'X', 1+6}, {'Y', 2+0}, {'Z', 3+3}}}
+    };    
     string line;
-    int current = 0;
-    int top[]{0, 0, 0};
+    int total = 0;
     while(getline(file,line)){
-        if(line.size()){
-            current += stoi(line);
-        } else {
-            int min_index = 0;
-            for(int i = 1; i < sizeof(top)/sizeof(int); ++i) {
-                if(top[i] < top[min_index])
-                    min_index = i;
-            }
-            if(current > top[min_index])
-                top[min_index] = current;
-            current = 0;
-        }
+        total += score.at(line[0]).at(line[2]);
     }
     file.close();
-    int max = 0, sum = 0;
-    for(int i = 0; i < 3; ++i){
-        sum += top[i];
-        if(top[i] > max)
-            max = top[i];
-    }   
-    cout<< "Part 1: "<< max << endl; 
-    cout<< "Part 2: "<< sum << endl; 
+    cout<< "Part 1: "<< total << endl; 
+    cout<< "Part 2: "<< 0 << endl; 
     return 0;
 }

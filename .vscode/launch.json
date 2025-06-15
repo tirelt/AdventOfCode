@@ -5,13 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug 2022/day05/main",
+            "name": "Debug 2022/day06/main",
             "type": "lldb",
             "request": "launch",
-            "program": "${cwd}/2022/day05/main",
+            "program": "${cwd}/2022/day06/main",
             "args": [],
-            "cwd": "${cwd}/2022/day05",
-            "preLaunchTask": "Build 2022/day05/main",
+            "cwd": "${cwd}/2022/day06",
+            "preLaunchTask": "Build 2022/day06/main",
         }
     ]
 }

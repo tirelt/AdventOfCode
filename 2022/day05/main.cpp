@@ -17,6 +17,7 @@ int main(){
     string line;
     bool instructions = false;
     map<int, vector<char>> stacks;
+    map<int, vector<char>> stacks_2;
     std::regex pattern(R"(move (\d+) from (\d+) to (\d+))");
     std::smatch matches;
     while(getline(file,line)){
@@ -24,6 +25,7 @@ int main(){
             instructions = true;
             for(auto& [stack_num, stack] : stacks)
                 std::reverse(stack.begin(), stack.end());
+            stacks_2 = stacks; // Copy stacks for part 2
             continue;
         }
         if(!instructions){
@@ -44,6 +46,18 @@ int main(){
                         to_stack.push_back(from_stack.back());
                         from_stack.pop_back();
                     }
+
+                    vector<char>& from_stack_2 = stacks_2[from];
+                    vector<char>& to_stack_2 = stacks_2[to];
+                    int max_quantity_2 = std::min(quantity,int(from_stack_2.size()));
+                    vector<char> temp;
+                    for (int i = 0; i < max_quantity_2; ++i) {
+                        temp.push_back(from_stack_2.back());
+                        from_stack_2.pop_back();
+                    }
+                    std::reverse(temp.begin(), temp.end());
+                    for(const char& c : temp)
+                        to_stack_2.push_back(c);
                 }
             }
         }
@@ -54,7 +68,12 @@ int main(){
         if(!stack.empty())
             res_1 += stack.back();
     }
-    cout<< "Part 1: "<< res_1 << endl; 
-    cout<< "Part 2: "<< "" << endl; 
+    string res_2;
+    for(const auto& [stack_num, stack] : stacks_2) {
+        if(!stack.empty())
+            res_2 += stack.back();
+    }
+    cout<< "Part 1: " << res_1 << endl; 
+    cout<< "Part 2: " << res_2 << endl; 
     return 0;
 }

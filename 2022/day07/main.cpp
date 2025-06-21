@@ -1,8 +1,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <regex>
-#include <regex>
 #include <map>
 #include <set>
 
@@ -10,7 +8,6 @@
 using std::string;
 using std::cout;
 using std::endl;
-using std::vector;
 using std::map;
 using std::set;
 

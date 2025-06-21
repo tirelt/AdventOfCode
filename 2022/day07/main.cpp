@@ -17,18 +17,18 @@ using std::set;
 struct File {
     File(string n, int s) : name(n), size(s) {}
     string name;
-    long long size;
+    int size;
 };
 
 struct Directory {
     Directory(string n) : name(n) {}
     string name;
-    long long size;
+    int size;
     set<File*> files;
     set<Directory*> subdirs;
     Directory* parent = nullptr;
     void get_size() {
-        long long total_size = 0;
+        int total_size = 0;
         for(Directory* subdir : subdirs) {
             subdir->get_size();
             total_size += subdir->size;
@@ -43,7 +43,7 @@ struct Directory {
 int main(){
     std::ifstream file("input");
     string line;
-    int res_1 = 0, res_2 = 0;
+    int res_1 = 0;
     Directory* current_dir = new Directory{"/"};
     map<string, Directory*> directories = {{current_dir->name, current_dir}};
     string prev_cmd;
@@ -94,12 +94,17 @@ int main(){
     }
     file.close();
     directories["/"]->get_size();
+    int cutoff = 30000000 - (70000000 - directories["/"]->size);
+    Directory* smallest_dir = directories["/"];
     for(const auto& [name, dir] : directories) {
         if(dir->size <= 100000) {
             res_1 += dir->size;
         }
+        if (dir->size >= cutoff && dir->size < smallest_dir->size) {
+            smallest_dir = dir;
+        }
     }
     cout<< "Part 1: " << res_1 << endl; 
-    cout<< "Part 2: " << res_2 << endl; 
+    cout<< "Part 2: " << smallest_dir->size << endl; 
     return 0;
 }

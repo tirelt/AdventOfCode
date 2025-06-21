@@ -18,7 +18,7 @@ int main(){
     std::ifstream file("input");
     string line;
     vector<vector<Forest>> forest;
-    int res_1 = 0, res_2 = 0;
+    int res_1 = 0;
     while(getline(file,line)){
         vector<Forest> row;
         for(const char& c : line){
@@ -65,6 +65,25 @@ int main(){
         }
     }
     cout<< "Part 1: " << res_1 << endl; 
+    int res_2 = 0;
+    for(int i = 1; i < forest.size()-1; ++i){
+        for(int j = 1; j < forest[i].size()-1; ++j){
+            int score = 1;
+            int temp = 1; 
+            for(int k = i - 1; k >0 && forest[k][j].height < forest[i][j].height; --k) ++temp;
+            score *= temp;
+            temp = 1;
+            for(int k = i + 1; k < forest[i].size() -1 && forest[k][j].height < forest[i][j].height; ++k) ++temp;
+            score *= temp;
+            temp = 1;
+            for(int k = j - 1; k >0 && forest[i][k].height < forest[i][j].height; --k) ++temp;
+            score *= temp;
+            temp = 1;
+            for(int k = j + 1; k < forest[i].size() - 1 && forest[i][k].height < forest[i][j].height; ++k) ++temp;
+            score *= temp;
+            res_2 = std::max(res_2, score);
+        }
+    }
     cout<< "Part 2: " << res_2 << endl; 
     return 0;
 }

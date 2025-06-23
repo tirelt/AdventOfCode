@@ -1,0 +1,41 @@
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <utility>
+#include <set>
+
+using std::string;
+using std::cout;
+using std::endl;
+using std::vector;
+using std::pair;
+using std::set;
+
+    
+int main(){
+    std::ifstream file("input");
+    string line;
+    int res_1 = 0, x  = 1, cycle = 0;
+    vector<int> interesting_cycles = {20, 60, 100, 140, 180, 220};
+    int interesting_cycle_index = 0;
+    while(getline(file,line)){
+        if(line.substr(0, 4) == "noop")
+            ++cycle;
+        else
+            cycle += 2; 
+
+        if(cycle >= interesting_cycles[interesting_cycle_index] ){
+            res_1 += x * interesting_cycles[interesting_cycle_index];
+            ++interesting_cycle_index;
+            if(interesting_cycle_index >= interesting_cycles.size()) {
+                break;
+            }
+        }
+        if(line.substr(0, 4) == "addx")
+            x += std::stoi(line.substr(5));
+    }
+    cout<< "Part 1: " << res_1 << endl; 
+    cout<< "Part 2: " << 0 << endl; 
+    return 0;
+}

@@ -5,13 +5,13 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "Build 2022/day09/main",
+            "label": "Build 2022/day10/main",
             "command": "make",
             "args": ["main"],
             "options": {
-                "cwd": "${cwd}/2022/day09"
+                "cwd": "${cwd}/2022/day10"
             },
-            "detail": "Build 2022/day09/main"
+            "detail": "Build 2022/day10/main"
         }
     ]
 }

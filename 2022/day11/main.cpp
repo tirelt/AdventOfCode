@@ -13,6 +13,35 @@ using std::vector;
 using std::map;
 using std::stoi;
 
+struct SmartItem {
+    map<int, int> modulo_values;
+    SmartItem(int value, const vector<int>& divisors) {
+        for (int divisor : divisors)
+            modulo_values[divisor] = value % divisor;
+    }
+    SmartItem& operator*(SmartItem& other) {
+        for (const auto& pair : modulo_values) {
+            int divisor = pair.first;
+            modulo_values.at(divisor) = (pair.second * other.modulo_values.at(divisor)) % divisor;
+        }
+        return *this;
+    } 
+    SmartItem& operator+(const int add) {
+        for (const auto& pair : modulo_values) {
+            int divisor = pair.first;
+            modulo_values[divisor] = (pair.second + add) % divisor;
+        }
+        return *this;
+    }
+    SmartItem& operator*(const int add) {
+        for (const auto& pair : modulo_values) {
+            int divisor = pair.first;
+            modulo_values[divisor] = (pair.second * add) % divisor;
+        }
+        return *this;
+    }
+};
+
 struct Monkey {
     int number;
     vector<int> items;
@@ -38,8 +67,47 @@ struct Monkey {
         }
         items.clear(); 
     }
+    int inspections_smart = 0;
+    vector<SmartItem*> smart_items;
+    void process_smart() {
+        for (SmartItem* item : smart_items) {
+            ++inspections_smart;
+            if (operand == "old") {
+                if (operation == '*')
+                    *item * *item;
+                else
+                    throw std::invalid_argument("Invalid operation with 'old' operand");
+            } else {
+                int operand_int = stoi(operand);
+                if (operation == '*')
+                    *item * operand_int;
+                else 
+                    *item + operand_int;
+            }
+            if (item->modulo_values[test_divisor] == 0)
+                true_monkey->smart_items.push_back(item);
+            else
+                false_monkey->smart_items.push_back(item);
+        }
+        smart_items.clear();
+    }
 };
-    
+
+long long calculate_monkey_business(map<int, Monkey*>& monkeys, int Monkey::* inspections_field) {
+    long long max_inspections = 0;
+    long long second_max_inspections = 0;
+    for (const auto& pair : monkeys) {
+        int inspections = pair.second->*inspections_field;
+        if (inspections > max_inspections) {
+            second_max_inspections = max_inspections;
+            max_inspections = inspections;
+        } else if (inspections > second_max_inspections) {
+            second_max_inspections = inspections;
+        }
+    }
+    return max_inspections * second_max_inspections;
+}
+
 int main(){
     std::ifstream file("input");
 
@@ -49,6 +117,7 @@ int main(){
     
     map<int, Monkey*> monkeys;
     map<int, std::pair<int, int>> monkey_mapping;
+    map<int,  vector<int>> monkey_starting_items;
     // Thank you AI overlords for the regex
     std::regex pattern(R"(Monkey (\d+):\n\s*Starting items: ([\d,\s]+)\n\s*Operation: new = old ([*+]) (\d+|\w+)\n\s*Test: divisible by (\d+)\n\s*If true: throw to monkey (\d+)\n\s*If false: throw to monkey (\d+))");
 
@@ -70,6 +139,7 @@ int main(){
         string item;
         while (std::getline(ss, item, ','))
             starting_items.push_back(std::stoi(item));
+        monkey_starting_items[monkey_number] = starting_items;
         monkeys[monkey_number] = new Monkey(monkey_number, starting_items,operator_str[0], operand, test_divisor, nullptr, nullptr);
         
     }
@@ -84,18 +154,28 @@ int main(){
         for (auto& pair : monkeys)
             pair.second->process();
     }
-    int max_inspections = 0;
-    int second_max_inspections = 0;
+    
+    cout<< "Part 1: " << calculate_monkey_business(monkeys,&Monkey::inspections)<< endl; 
+
+    vector<int> divisors;
+    for (auto& pair : monkeys)
+        divisors.push_back(pair.second->test_divisor);
     for (auto& pair : monkeys) {
-        int inspections = pair.second->inspections;
-        if (inspections > max_inspections) {
-            second_max_inspections = max_inspections;
-            max_inspections = inspections;
-        } else if (inspections > second_max_inspections) {
-            second_max_inspections = inspections;
-        }
+        for (int item : monkey_starting_items[pair.first])
+            pair.second->smart_items.push_back(new SmartItem(item, divisors));
+    }    
+    for(int round = 0; round < 10000; ++round) {
+        for (auto& pair : monkeys)
+            pair.second->process_smart();
     }
-    cout<< "Part 1: " << max_inspections * second_max_inspections << endl; 
-    cout<< "Part 2: "<< 0 << endl; 
+
+    cout<< "Part 2: " << calculate_monkey_business(monkeys,&Monkey::inspections_smart)<< endl; 
+
+    for(auto& pair : monkeys) {
+        for (auto& smart_item : pair.second->smart_items) {
+            delete smart_item;
+        }
+        delete pair.second; 
+    }
     return 0;
 }

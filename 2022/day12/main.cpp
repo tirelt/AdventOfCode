@@ -107,5 +107,6 @@ int main(){
         }
     }
     cout<< "Part 2: " << queue.top().num_steps << endl; 
+
     return 0;
 }

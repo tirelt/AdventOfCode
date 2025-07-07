@@ -5,6 +5,7 @@
 #include <regex>
 #include <algorithm>
 #include <set>
+#include <map>
 
 
 using std::string;
@@ -16,6 +17,7 @@ using std::abs;
 using std::pair;
 using std::sort;
 using std::set;
+using std::map;
 
 int main(){
     std::ifstream file("input");
@@ -24,6 +26,7 @@ int main(){
     int y_target = 2000000; 
     vector<pair<int, int>> intervals; 
     set<pair<int, int>> beacons;
+    vector<pair<pair<int, int>,int>> sensors;
     while(getline(file,line)){
         std::smatch matches;
         if (std::regex_match(line, matches, pattern)) {
@@ -34,6 +37,7 @@ int main(){
             if (beacon_y == y_target)
                 beacons.insert({beacon_x, beacon_y});
             int distance_to_beacon = abs(sensor_x - beacon_x) + abs(sensor_y - beacon_y);
+            sensors.push_back({{sensor_x, sensor_y},distance_to_beacon});
             int distance_to_target = abs(sensor_y - y_target); 
             if ( distance_to_target <= distance_to_beacon) {
                 int x_distance = distance_to_beacon - distance_to_target; 
@@ -81,6 +85,16 @@ int main(){
     }
     cout<< "Part 1: " << res_1 << endl; 
 
+    int res_2 = 0;
+    for(int i = 0; i < sensors.size(); ++i){
+        for(int j = i+1; j < sensors.size(); ++j){
+            for(int k = j+1; k < sensors.size(); ++k){
+                for(int l = k+1; l < sensors.size(); ++l){
+                    res_2++;
+                }
+            }
+        }
+    }
     cout<< "Part 2: " << 0 << endl; 
 
     return 0;

@@ -19,8 +19,14 @@ using std::sort;
 using std::set;
 using std::map;
 
+bool possible(const pair<pair<int, int>,int>& a, const pair<pair<int, int>,int>& b) {
+    int diag_dist = abs((a.first.first - a.first.second) - (b.first.first - b.first.second));
+    int comp = a.second + b.second + 2;
+    return diag_dist == comp;
+}
+
 int main(){
-    std::ifstream file("input");
+    std::ifstream file("test_input");
     string line;
     std::regex pattern(R"(Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+))");
     int y_target = 2000000; 
@@ -90,7 +96,23 @@ int main(){
         for(int j = i+1; j < sensors.size(); ++j){
             for(int k = j+1; k < sensors.size(); ++k){
                 for(int l = k+1; l < sensors.size(); ++l){
-                    res_2++;
+                    if (possible(sensors[i], sensors[j])) {
+                        if (possible(sensors[k], sensors[l])){
+                            int a = 1;
+                            break; 
+                        }
+                    } else if (possible(sensors[i], sensors[k])) {
+                        if (possible(sensors[j], sensors[l])){
+                            int a = 1;
+                            break;
+                        }
+                    } else if (possible(sensors[i], sensors[l])) {
+                        if (possible(sensors[j], sensors[k])){
+                            int a = 1;
+                            break;
+                        }
+                    } else
+                        continue;
                 }
             }
         }

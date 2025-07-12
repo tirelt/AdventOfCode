@@ -96,28 +96,48 @@ int main(){
         for(int j = i+1; j < sensors.size(); ++j){
             for(int k = j+1; k < sensors.size(); ++k){
                 for(int l = k+1; l < sensors.size(); ++l){
-                    if (possible(sensors[i], sensors[j])) {
-                        if (possible(sensors[k], sensors[l])){
-                            int a = 1;
-                            break; 
+                    int a, b, c, d, e, f, g, h;
+                    map<int,int*> x_coords = {{sensors[i].first.first,&a}, {sensors[j].first.first,&b}, {sensors[k].first.first,&c}, {sensors[l].first.first ,&d}};
+                    map<int,int*> y_coords = {{sensors[i].first.second,&e}, {sensors[j].first.second,&f}, {sensors[k].first.second,&g}, {sensors[l].first.second ,&h}};
+                    vector<vector<int>> possibilities = {{1,-1,-1,-1},{1,1,-1,-1},{1,1,1,-1}};
+                    for(int n = 0; n < possibilities.size(); ++n){
+                        int counter = 0;
+                        for( auto& x : x_coords)
+                            *x.second = possibilities[n][counter++];
+                        for(int m = 0; m < possibilities.size(); ++m){
+                            counter = 0;
+                            for( auto& y : y_coords)
+                                *y.second = possibilities[m][counter++];
+                            int a_ = a*a + b*b + c*c + d*d;
+                            int b_ = a*e + b*f + c*g + d*h;
+                            int d_ = e*e + f*f + g*g + h*h;
+                            double det = a_*d_ - b_*b_;
+                            int r = sensors[i].second + 1 + a * sensors[i].first.first + e * sensors[i].first.second;
+                            int s = sensors[j].second + 1 + b * sensors[j].first.first + f * sensors[j].first.second;
+                            int t = sensors[k].second + 1 + c * sensors[k].first.first + g * sensors[k].first.second;
+                            int u = sensors[l].second + 1 + d * sensors[l].first.first + h * sensors[l].first.second; 
+                            int y  = a * r + b * s + c * t + d * u;
+                            int z = e * r + f * s + g * t + h * u;
+                            if (abs(det)>1e-6 ){
+                                double v = (y * d_ - z * b_) / det;
+                                double w = (- y * b_ + z * a_) / det; 
+                                double test_1 = a*(v-sensors[i].first.first) + e*(w-sensors[i].first.second) - (sensors[i].second + 1);
+                                double test_2 = b*(v-sensors[j].first.first) + f*(w-sensors[j].first.second) - (sensors[j].second + 1);
+                                double test_3 = c*(v-sensors[k].first.first) + g*(w-sensors[k].first.second) - (sensors[k].second + 1);
+                                double test_4 = d*(v-sensors[l].first.first) + h*(w-sensors[l].first.second) - (sensors[l].second + 1);
+                                if (abs(test_1) < 1e-6 && abs(test_2) < 1e-6 && abs(test_3) < 1e-6 && abs(test_4) < 1e-6) {
+                                    
+                                    //if (v >= 0 && v <= 4000000 && w >= 0 && w <= 4000000) {
+                                        cout << "Part 2: " << v * 4000000 + w << endl;
+                                        //return 0;
+                                   // }
+                                }
+                            }  
                         }
-                    } else if (possible(sensors[i], sensors[k])) {
-                        if (possible(sensors[j], sensors[l])){
-                            int a = 1;
-                            break;
-                        }
-                    } else if (possible(sensors[i], sensors[l])) {
-                        if (possible(sensors[j], sensors[k])){
-                            int a = 1;
-                            break;
-                        }
-                    } else
-                        continue;
+                    } 
                 }
             }
         }
     }
-    cout<< "Part 2: " << 0 << endl; 
-
     return 0;
 }

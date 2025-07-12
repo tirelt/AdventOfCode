@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <set>
 #include <map>
-
+#include <chrono>
 
 using std::string;
 using std::cout;
@@ -26,6 +26,7 @@ bool possible(const pair<pair<int, int>,int>& a, const pair<pair<int, int>,int>&
 }
 
 int main(){
+    auto start = std::chrono::high_resolution_clock::now();
     std::ifstream file("input");
     string line;
     std::regex pattern(R"(Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+))");
@@ -89,7 +90,9 @@ int main(){
         } else 
             current_count += count_at_x;
     }
-    cout<< "Part 1: " << res_1 << endl; 
+    auto end_1 = std::chrono::high_resolution_clock::now();
+    auto duration_1 = std::chrono::duration_cast<std::chrono::microseconds>(end_1 - start);
+    cout<< "Part 1: " << res_1  << " - " << duration_1.count() << endl; 
 
     /*
     Intuition for part 2:
@@ -154,7 +157,9 @@ int main(){
                                     }
                                     if(!too_close) {
                                         long long res_2 = v * 4e6 + w;
-                                        cout << "Part 2: " << res_2  << endl;
+                                        auto end_2 = std::chrono::high_resolution_clock::now();
+                                        auto duration_2 = std::chrono::duration_cast<std::chrono::microseconds>(end_2 - end_1);
+                                        cout << "Part 2: " << res_2 << " - " << duration_2.count() << endl; 
                                         return 0;
                                     }
                                 }

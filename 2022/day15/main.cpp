@@ -26,7 +26,7 @@ bool possible(const pair<pair<int, int>,int>& a, const pair<pair<int, int>,int>&
 }
 
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     string line;
     std::regex pattern(R"(Sensor at x=(-?\d+), y=(-?\d+): closest beacon is at x=(-?\d+), y=(-?\d+))");
     int y_target = 2000000; 
@@ -91,7 +91,23 @@ int main(){
     }
     cout<< "Part 1: " << res_1 << endl; 
 
-    int res_2 = 0;
+    /*
+    Intuition for part 2:
+    We need to find a point that needs to be at 1 unit away from 4 sensors and not too close to any other sensor.
+    So for each 4 sensors we can set up a system of equations that describes the point and we solve it,
+    Then we check if the point is valid, i.e. not too close to any other sensor.
+
+    The maximum of different combinations of 4 sensors is 32 choose 4 = 35,960. O(n^4) where n is the number of sensors
+    For each combination the sign of the abs value can take 9 differnet values. 
+    So we solve at most 35,960 * 9 = 323,640 systems of equations.
+
+    Solving a system is O(1). 
+
+    Checking if a solution is valid is O(n).
+
+    So the overall complexity is O(n^5).
+    */
+    int checks = 0;
     for(int i = 0; i < sensors.size(); ++i){
         for(int j = i+1; j < sensors.size(); ++j){
             for(int k = j+1; k < sensors.size(); ++k){
@@ -118,6 +134,7 @@ int main(){
                             int u = sensors[l].second + 1 + d * sensors[l].first.first + h * sensors[l].first.second; 
                             int y  = a * r + b * s + c * t + d * u;
                             int z = e * r + f * s + g * t + h * u;
+                            checks++;
                             if (abs(det)>1e-6 ){
                                 double v = (y * d_ - z * b_) / det;
                                 double w = (- y * b_ + z * a_) / det; 
@@ -125,12 +142,21 @@ int main(){
                                 double test_2 = b*(v-sensors[j].first.first) + f*(w-sensors[j].first.second) - (sensors[j].second + 1);
                                 double test_3 = c*(v-sensors[k].first.first) + g*(w-sensors[k].first.second) - (sensors[k].second + 1);
                                 double test_4 = d*(v-sensors[l].first.first) + h*(w-sensors[l].first.second) - (sensors[l].second + 1);
-                                if (abs(test_1) < 1e-6 && abs(test_2) < 1e-6 && abs(test_3) < 1e-6 && abs(test_4) < 1e-6) {
-                                    
-                                    //if (v >= 0 && v <= 4000000 && w >= 0 && w <= 4000000) {
-                                        cout << "Part 2: " << v * 4000000 + w << endl;
-                                        //return 0;
-                                   // }
+                                if (abs(test_1) < 1e-6 && abs(test_2) < 1e-6 && abs(test_3) < 1e-6 && abs(test_4) < 1e-6 && v >= 0 && w >= 0 && v <= 4e6 && w <= 4e6) {
+                                    bool too_close = false;
+                                    for(int p = 0; p < sensors.size(); ++p){
+                                        if (p != i && p != j && p != k && p != l){
+                                            if (abs(sensors[p].first.first - v) + abs(sensors[p].first.second - w) <= sensors[p].second) {
+                                                too_close = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if(!too_close) {
+                                        long long res_2 = v * 4e6 + w;
+                                        cout << "Part 2: " << res_2  << endl;
+                                        return 0;
+                                    }
                                 }
                             }  
                         }

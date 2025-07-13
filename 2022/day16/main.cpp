@@ -29,31 +29,23 @@ struct Valve {
     int number;
 };
 
-vector<string> convert_states(const int state, const map<string,Valve*>& valves) {
-    vector<string> res;
-    for( const auto& [n,v] : valves )
-        if( state & (1<<v->number))
-            res.push_back(n);
-}
-
-int update_memory(const map<string,Valve*>& valves, int rate,int released, tuple<string,int,int> name_states_time,map<tuple<string,int,int>,int>& memory) {
+int update_memory(const map<string,Valve*>& valves, int rate, tuple<string,int,int> name_states_time,map<tuple<string,int,int>,int>& memory) {
     if (memory.find(name_states_time) != memory.end())
         return memory.at(name_states_time);
     string name = get<0>(name_states_time);
     int states = get<1>(name_states_time);
     int time = get<2>(name_states_time);
-    auto temp = convert_states(states,valves);
     if (!time) {
-        memory[name_states_time] = released;
-        return released;
+        memory[name_states_time] = 0;
+        return 0;
     }
-    vector<int> possible_releases{time*rate+released};
+    vector<int> possible_releases{time*rate};
     for (const auto& [next_valve,distance] : valves.at(name)->distances) {
         if (time >= (distance+1)) {
             bool state_next_valve = states & (1<<valves.at(next_valve)->number);
             if (!state_next_valve){
                 int next_states = states | (1<<valves.at(next_valve)->number);
-                possible_releases.push_back(update_memory(valves, rate + valves.at(next_valve)->flow_rate, released + (distance + 1) * rate, {next_valve,next_states,time-(distance+1)}, memory));
+                possible_releases.push_back((distance + 1) * rate + update_memory(valves, rate + valves.at(next_valve)->flow_rate, {next_valve,next_states,time-(distance+1)}, memory));
             }
         }
     }
@@ -63,7 +55,7 @@ int update_memory(const map<string,Valve*>& valves, int rate,int released, tuple
 }
 
 int main(){
-    std::ifstream file("test_input");
+    std::ifstream file("input");
     string line;
     std::regex pattern(R"(^Valve (\w+) has flow rate=(\d+); tunnels? leads? to valves? ([\w\s,]+)$)");
     map<string, Valve*> valves;
@@ -77,7 +69,7 @@ int main(){
             int flow_rate = std::stoi(match[2]);
             valves[valve_name] = new Valve(valve_name);
             valves[valve_name]->flow_rate = flow_rate;
-            if (flow_rate){
+            if (flow_rate || valve_name == "AA"){
                 meaningfull_valves.push_back(valve_name);
                 valves[valve_name]->number = count++;
             }
@@ -122,8 +114,10 @@ int main(){
     int states = 0;
     states = states | (1<<valves["AA"]->number);
     map<std::tuple<string,int,int>,int> memory;
-    int res_1 = update_memory(valves, 0, 0, {"AA",states,30}, memory);
+    int res_1 = update_memory(valves, 0, {"AA",states,30}, memory);
     
+    cout<< "Part 1: " << res_1  << endl; 
+
     for(auto& p : valves)
         delete p.second;
     return 0;

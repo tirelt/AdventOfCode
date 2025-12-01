@@ -7,6 +7,7 @@
 #include <map>
 #include <list>
 #include <algorithm>
+#include <set>
 
 using std::string;
 using std::cout;
@@ -19,6 +20,7 @@ using std::tuple;
 using std::make_tuple;
 using std::get;
 using std::pair;
+using std::set;
 
 struct Valve {
     Valve(const string& n) : name(n) {}
@@ -46,6 +48,38 @@ int update_memory(const map<string,Valve*>& valves, int rate, tuple<string,int,i
             if (!state_next_valve){
                 int next_states = states | (1<<valves.at(next_valve)->number);
                 possible_releases.push_back((distance + 1) * rate + update_memory(valves, rate + valves.at(next_valve)->flow_rate, {next_valve,next_states,time-(distance+1)}, memory));
+            }
+        }
+    }
+    int max_released = *std::max_element(possible_releases.begin(),possible_releases.end());
+    memory[name_states_time] = max_released;
+    return max_released;
+}
+
+int update_memory_2(const map<string,Valve*>& valves, int rate, tuple<string,int,int> name_states_time,map<tuple<string,int,int>,int>& memory) {
+    if (memory.find(name_states_time) != memory.end())
+        return memory.at(name_states_time);
+    string name_ = get<0>(name_states_time);
+    const auto pos_delimiter = s.find('-');
+    string name_1 = name_.substr(0,pos_delimiter);
+    string name_2  = name_.substr(pos_delimiter);
+    int states = get<1>(name_states_time);
+    int time = get<2>(name_states_time);
+    if (memory.find({name_2+'-'+name_1,states,time}) != memory.end())
+        return memory.at(name_states_time);
+    if (!time) {
+        memory[name_states_time] = 0;
+        return 0;
+    }
+    vector<int> possible_releases{time*rate};
+    for (const auto& [next_valve_1,distance_1] : valves.at(name_1)->distances) {
+        for (const auto& [next_valve_2,distance_2] : valves.at(name_2)->distances) {
+            if (time >= (distance_1+1)) {
+                bool state_next_valve = states & (1<<valves.at(next_valve)->number);
+                if (!state_next_valve){
+                    int next_states = states | (1<<valves.at(next_valve)->number);
+                    possible_releases.push_back((distance + 1) * rate + update_memory(valves, rate + valves.at(next_valve)->flow_rate, {next_valve,next_states,time-(distance+1)}, memory));
+                }
             }
         }
     }
@@ -113,11 +147,12 @@ int main(){
 
     int states = 0;
     states = states | (1<<valves["AA"]->number);
-    map<std::tuple<string,int,int>,int> memory;
+    map<tuple<string,int,int>,int> memory;
     int res_1 = update_memory(valves, 0, {"AA",states,30}, memory);
     
     cout<< "Part 1: " << res_1  << endl; 
 
+    //map<tuple<set<string>,string,int,int>,int> memory_2;
     for(auto& p : valves)
         delete p.second;
     return 0;

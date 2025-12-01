@@ -1,9 +1,9 @@
 use std::fs;
-fn main() {
-    let file = fs::read_to_string("input").expect("should work");
+
+fn part_1(file_string: &String) {
     let mut pos = 50;
     let mut res = 0;
-    for line in file.lines(){
+    for line in file_string.lines(){
         let instructions = line.trim();
         let mut ite = instructions.chars();
         let dir = ite.next().unwrap();
@@ -19,4 +19,52 @@ fn main() {
         }
     }
     println!("Part 1: {res}");
+}
+
+fn part_2(file_string: &String) {
+    let mut pos = 50;
+    let mut res = 0;
+    let mut new_pos;
+    let mut res_ = 0;
+    for line in file_string.lines(){
+        let instructions = line.trim();
+        let mut ite = instructions.chars();
+        let dir = ite.next().unwrap();
+        let rest: String = ite.collect();
+        let mut n: i32 = rest.parse().unwrap();
+        let mut rota = n/100;
+        res += n/100; 
+        n = n % 100;
+        if n != 0 {
+            if dir == 'L' { 
+                new_pos = pos - n;
+                if new_pos <= 0{
+                    res += 1;
+                    rota += 1;
+                }
+                if new_pos < 0 {
+                    new_pos += 100;
+                }
+            } else {
+                res += (pos + n ) / 100;
+                rota += (pos +n)/100;
+                new_pos = (pos + n ) % 100;
+            }
+            if new_pos == 0{
+                res_ +=1;
+            }
+            println!("{pos}->{new_pos}, instructions {instructions}, rota {rota}");
+            pos = new_pos;
+            if new_pos < 0 || new_pos > 100 {
+                panic!("wtf");
+            }
+        }
+    }
+    println!("Part 2: {res}");
+
+}
+fn main() {
+    let file = fs::read_to_string("input").expect("should work");
+    part_1(&file);
+    part_2(&file);
 }

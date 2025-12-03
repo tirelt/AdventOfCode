@@ -22,19 +22,37 @@ fn part_1(line: &str) -> i32 {
 }
 
 
-fn part_2(line: &str, current: i32,remaining: i32,memo: &mut HashMap<(i32,i32),String>) -> String{
-    if let Some(v) = memo.get(&(remaining,remaining)){
-        return v.clone();
+fn part_2(line: &Vec<char>, p: usize, n: usize) -> String{
+    let last = line.len()-n;
+    let m = line[p..last].iter().max().unwrap();
+    let rest = part_2(line,new_p,n-1);
+    format!("{}{}",m,rest)
+}
+
+fn max_string(v: &Vec<char>) -> (char,usize) {
+    let mut p: usize = 0;
+    let mut m: char = v[p];
+    for i in 1..v.len(){
+        if v[i] > m {
+            m = v[i];
+            p = i;
+        }
+    } 
+    (m,p)
+}
+
+fn string_to_array(line: &str) -> Vec<char> {
+    let mut v = Vec::new();
+    for c in line.chars(){
+        v.push(c);
     }
-    if line.len() as i32 - current == remaining {
-        return line.to_string();
-    }
-    String::new()
+    v
 }
 fn main() {
     let file = fs::read_to_string("input").unwrap();
     let mut res_1 = 0;
     for line in file.lines(){
+        let v = string_to_array(&line);
         let max = part_1(&line); // line.len()>1 ininput
         res_1 += max;
     }

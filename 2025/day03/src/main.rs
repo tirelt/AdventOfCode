@@ -1,6 +1,7 @@
 use std::fs;
+use std::collections::HashMap;
 
-fn max_string(line: &str) -> i32 {
+fn part_1(line: &str) -> i32 {
     let mut ite = line.chars().peekable();
     let mut max = ite.next().unwrap();
     let mut ite_max = ite.clone();
@@ -19,11 +20,22 @@ fn max_string(line: &str) -> i32 {
     let res = format!("{}{}",max,second_max);
     res.parse().unwrap()
 }
+
+
+fn part_2(line: &str, current: i32,remaining: i32,memo: &mut HashMap<(i32,i32),String>) -> String{
+    if let Some(v) = memo.get(&(remaining,remaining)){
+        return v.clone();
+    }
+    if line.len() as i32 - current == remaining {
+        return line.to_string();
+    }
+    String::new()
+}
 fn main() {
     let file = fs::read_to_string("input").unwrap();
     let mut res_1 = 0;
     for line in file.lines(){
-        let max = max_string(&line); // line.len()>1 ininput
+        let max = part_1(&line); // line.len()>1 ininput
         res_1 += max;
     }
     println!("Part 1: {res_1}")

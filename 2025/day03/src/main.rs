@@ -24,7 +24,7 @@ fn part_1(line: &str) -> i32 {
 
 fn part_2(line: &Vec<char>, p: usize, n: usize) -> String{
     let last = line.len()-n;
-    let m = line[p..last].iter().max().unwrap();
+    let (m,new_p) = max_string(line);
     let rest = part_2(line,new_p,n-1);
     format!("{}{}",m,rest)
 }

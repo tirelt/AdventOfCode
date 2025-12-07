@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::fs;
+
 fn main() {
     let file = fs::read_to_string("input").unwrap();
     let mut items_to_check: Vec<i128> = Vec::new();
@@ -41,5 +42,20 @@ fn main() {
             res_1 += 1;
         }
     }
+    let mut res_2: i128 = 0;
+    range_count = 0;
+    let mut ref_num: i128 = 0;
+    for range in ranges {
+        if range_count == 0 {
+            ref_num = range.0;
+            range_count += range.1;
+        } else {
+            range_count += range.1;
+            if range_count == 0 {
+                res_2 += range.0 - ref_num;
+            }
+        }
+    }
     println!("Part 1: {res_1}");
+    println!("Part 2: {res_2}");
 }

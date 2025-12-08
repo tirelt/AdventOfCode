@@ -54,9 +54,12 @@ fn main() {
     let mut counter = 0;
     let n_ite = 1000;
     let mut circuits: Vec<Vec<usize>> = Vec::new();
+    let mut connected = 0;
+    let mut res_2 = 0;
+    let mut saved_circuits = Vec::new();
     for d in dists.iter() {
-        if counter >= n_ite {
-            break;
+        if counter == n_ite {
+            saved_circuits = circuits.clone();
         }
         let c_1 = boxes[d.boxe_1].circuit;
         let c_2 = boxes[d.boxe_2].circuit;
@@ -64,16 +67,19 @@ fn main() {
             (Some(c), None) => {
                 boxes[d.boxe_2].circuit = Some(c);
                 circuits[c].push(d.boxe_2);
+                connected += 1;
             }
             (None, Some(c)) => {
                 boxes[d.boxe_1].circuit = Some(c);
                 circuits[c].push(d.boxe_1);
+                connected += 1;
             }
             (None, None) => {
                 let c = circuits.len();
                 boxes[d.boxe_2].circuit = Some(c);
                 boxes[d.boxe_1].circuit = Some(c);
                 circuits.push(vec![d.boxe_1, d.boxe_2]);
+                connected += 2;
             }
             (Some(i), Some(j)) => {
                 if i != j {
@@ -86,8 +92,13 @@ fn main() {
             }
         }
         counter += 1;
+        if connected >= n_boxes {
+            res_2 = boxes[d.boxe_1].x * boxes[d.boxe_2].x;
+            break;
+        }
     }
-    circuits.sort_by(|a, b| b.len().cmp(&a.len()));
-    let res_1 = circuits[0].len() * circuits[1].len() * circuits[2].len();
+    saved_circuits.sort_by(|a, b| b.len().cmp(&a.len()));
+    let res_1 = saved_circuits[0].len() * saved_circuits[1].len() * saved_circuits[2].len();
     println!("Part 1: {res_1}");
+    println!("Part 2: {res_2}");
 }

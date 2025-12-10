@@ -1,4 +1,4 @@
-use plotly::layout::Shape;
+use plotly::layout::{Shape, ShapeLine, ShapeType};
 use plotly::{Layout, Plot, Scatter};
 use std::cmp::{max, min};
 use std::fs;
@@ -8,7 +8,7 @@ struct Tile {
 }
 impl Tile {
     fn area(&self, other: &Self) -> i64 {
-        (self.x - other.x + 1).abs() * (self.y - other.y + 1).abs()
+        ((self.x - other.x).abs() + 1) * ((self.y - other.y).abs() + 1)
     }
 }
 fn rect_intersert_polygon(
@@ -79,7 +79,6 @@ fn main() {
     let mut x1 = 0;
     let mut y0 = 0;
     let mut y1 = 0;
-
     for (area, (i, j)) in areas {
         let c1 = &tiles[i];
         let c2 = &tiles[j];
@@ -110,7 +109,13 @@ fn main() {
         .y0(y0)
         .x1(x1)
         .y1(y1)
-        .shape_type(plotly::layout::ShapeType::Rect);
+        .shape_type(ShapeType::Rect)
+        .fill_color("rgba(255, 0, 0, 0.3)")
+        .line(
+            ShapeLine::new()
+                .color("rgba(255, 0, 0, 1.0)") // opaque border
+                .width(2.0),
+        );
     let mut layout = Layout::new().width(900).height(900);
     layout.add_shape(rect);
     plot.set_layout(layout);

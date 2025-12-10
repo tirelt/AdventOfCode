@@ -1,7 +1,6 @@
 use plotly::layout::Shape;
 use plotly::{Layout, Plot, Scatter};
-use std::collections::BTreeSet;
-use std::collections::HashMap;
+use std::cmp::{max, min};
 use std::fs;
 struct Tile {
     x: i64,
@@ -12,17 +11,31 @@ impl Tile {
         (self.x - other.x + 1).abs() * (self.y - other.y + 1).abs()
     }
 }
+fn rect_intersert_polygon(
+    x_min: i64,
+    y_min: i64,
+    x_max: i64,
+    y_max: i64,
+    horizontal_edges: &Vec<(i64, i64, i64)>,
+    vertical_edges: &Vec<(i64, i64, i64)>,
+) -> bool {
+    for (x, y_min_edge, y_max_edge) in vertical_edges {
+        if *x > x_min && *x < x_max && max(y_min, *y_min_edge) < min(y_max, *y_max_edge) {
+            return true;
+        }
+    }
+    for (y, x_min_edge, x_max_edge) in horizontal_edges {
+        if *y > y_min && *y < y_max && max(x_min, *x_min_edge) < min(x_max, *x_max_edge) {
+            return true;
+        }
+    }
+    false
+}
 fn main() {
     let file = fs::read_to_string("input").unwrap();
-    let threshold = 50000; // data dependent
     let mut tiles = Vec::new();
-    let mut counter = 0;
     let mut x_list = Vec::new();
     let mut y_list = Vec::new();
-    let mut outlier = Vec::new();
-    let mut prev_x = -1;
-    let mut map_x = HashMap::new();
-    let mut map_y = HashMap::new();
     for line in file.lines() {
         let mut ite = line.split(',');
         let x: i64 = ite.next().unwrap().parse().unwrap();
@@ -30,16 +43,8 @@ fn main() {
         x_list.push(x);
         y_list.push(y);
         tiles.push(Tile { x, y });
-        map_x.entry(x).or_insert(BTreeSet::new()).insert(counter);
-        map_y.entry(y).or_insert(BTreeSet::new()).insert(counter);
-        if prev_x > 0 {
-            if (prev_x - x).abs() > threshold {
-                outlier.push(counter);
-            }
-        }
-        prev_x = x;
-        counter += 1;
     }
+
     let mut areas = Vec::new();
     let mut res_1 = 0;
     for i in 0..tiles.len() {
@@ -57,14 +62,49 @@ fn main() {
     let mut plot = Plot::new();
     plot.add_trace(trace);
     //Part 2
-    let mut res_2 = 0;
-    let mut outlier1 = &tiles[outlier[0]];
-    let mut outlier2 = &tiles[outlier[1]];
-    if outlier1.y > outlier2.y {
-        outlier1 = &tiles[outlier[1]];
-        outlier2 = &tiles[outlier[0]];
+    let mut horizontal_edges = Vec::new();
+    let mut vertical_edges = Vec::new();
+    for i in 0..tiles.len() {
+        let t1 = &tiles[i];
+        let t2 = &tiles[(i + 1) % tiles.len()];
+        if t1.x == t2.x {
+            vertical_edges.push((t1.x, min(t1.y, t2.y), max(t1.y, t2.y)));
+        } else {
+            horizontal_edges.push((t1.y, min(t1.x, t2.x), max(t1.x, t2.x)));
+        }
     }
-    let (x0, x1, y0, y1) = (0, 0, 0, 0);
+
+    let mut res_2 = 0;
+    let mut x0 = 0;
+    let mut x1 = 0;
+    let mut y0 = 0;
+    let mut y1 = 0;
+
+    for (area, (i, j)) in areas {
+        let c1 = &tiles[i];
+        let c2 = &tiles[j];
+        let (x_min, y_min, x_max, y_max) = (
+            min(c1.x, c2.x),
+            min(c1.y, c2.y),
+            max(c1.x, c2.x),
+            max(c1.y, c2.y),
+        );
+        if !rect_intersert_polygon(
+            x_min,
+            y_min,
+            x_max,
+            y_max,
+            &horizontal_edges,
+            &vertical_edges,
+        ) {
+            res_2 = area;
+            x0 = x_min;
+            x1 = x_max;
+            y0 = y_min;
+            y1 = y_max;
+            break;
+        }
+    }
     let rect = Shape::new()
         .x0(x0)
         .y0(y0)

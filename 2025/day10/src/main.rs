@@ -1,4 +1,6 @@
-use minilp::{ComparisonOp, LinearExpr, OptimizationDirection, Problem};
+use good_lp::{
+    Expression, ProblemVariables, Solution, SolverModel, solvers::highs::highs, variable,
+};
 use ndarray::Array;
 use std::cmp::min;
 use std::fs;
@@ -22,8 +24,6 @@ fn main() {
     let mut res_1 = 0;
     let mut res_2 = 0.0;
     for line in file.lines() {
-        let mut problem = Problem::new(OptimizationDirection::Minimize);
-        let mut variables = Vec::new();
         let mut ite = line.split(" ");
         let mut objective = Vec::new();
         for c in ite.next().unwrap().chars() {
@@ -54,7 +54,6 @@ fn main() {
             }
             buttons.push(Array::from_vec(v));
             buttons_2.push(v_2);
-            variables.push(problem.add_var(1.0, (0.0, f64::INFINITY)));
         }
         let mut current_str = current_str.to_string();
         current_str.retain(|c| c != '{' && c != '}');
@@ -63,26 +62,29 @@ fn main() {
             joltage.push(num);
         }
         assert_eq!(joltage.len(), buttons_2[0].len());
+
+        let n_buttons = buttons.len();
+        // Part 2
+        let mut vars = ProblemVariables::new();
+        let x: Vec<_> = (0..n_buttons)
+            .map(|_| vars.add(variable().min(0).integer())) // integer, non-negative
+            .collect();
+        let obj: Expression = x.iter().cloned().sum();
+        let mut problem = vars.minimise(obj.clone()).using(highs);
         for i in 0..joltage.len() {
-            let mut lhs = LinearExpr::empty();
-            let mut j = 0;
-            for &v in &variables {
+            let mut expr: Expression = 0.0.into();
+            for j in 0..n_buttons {
                 if buttons_2[j][i] > 0 {
-                    lhs.add(v, buttons_2[j][i] as f64);
+                    expr = expr + buttons_2[j][i] * x[j];
                 }
-                j += 1;
             }
-            problem.add_constraint(lhs, ComparisonOp::Eq, joltage[i] as f64);
+            problem = problem.with(expr.eq(joltage[i]));
         }
         let solution = problem.solve().unwrap();
-        let temp = solution.objective();
-        if temp - (temp as i64 as f64) > 0.1 {
-            let mut j = 0;
-            let vars_solution: Vec<f64> = variables.into_iter().map(|x| solution[x]).collect();
-            j += 1;
-        }
-        res_2 += temp;
-        let n_buttons = buttons.len();
+        let values: Vec<f64> = x.into_iter().map(|x| solution.value(x)).collect();
+        let min_val: f64 = solution.eval(obj);
+        res_2 += min_val;
+
         let mut min_buttons = n_buttons;
         let all_combinations = generate_combinations(n_buttons as usize);
         for combination in all_combinations.iter() {

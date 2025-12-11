@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
+use std::time::Instant;
 
 fn dfs<'a>(
     front: &'a str,
@@ -24,6 +25,8 @@ fn dfs<'a>(
 }
 
 fn main() {
+    //Reading parsing
+    let mut start = Instant::now();
     let file = fs::read_to_string("input").unwrap();
     let mut devices = HashMap::new();
     for line in file.lines() {
@@ -35,10 +38,17 @@ fn main() {
             connected_to.push(d.to_string());
         }
     }
-    let mut memo: HashMap<&str, i64> = HashMap::new();
-    let res_1 = dfs("svr", "out", &devices, &mut memo);
+    let mut duration = start.elapsed().as_secs_f64() * 1_000_000.0;
+    println!("Reading and parsing: {:.0}μs", duration);
 
+    //Part 1
+    start = Instant::now();
+    let mut memo: HashMap<&str, i64> = HashMap::new();
+    let res_1 = dfs("you", "out", &devices, &mut memo);
+    duration = start.elapsed().as_secs_f64() * 1_000_000.0;
+    println!("Part 1: {res_1} - {:.0}μs", duration);
     //Part 2
+    start = Instant::now();
     let path = vec!["svr", "fft", "dac", "out"];
     let mut res_2 = 1;
     for i in 0..(path.len() - 1) {
@@ -46,6 +56,6 @@ fn main() {
         let temp = dfs(path[i], path[i + 1], &devices, &mut memo) as i128;
         res_2 *= temp;
     }
-    println!("Part 1: {res_1}");
-    println!("Part 2: {res_2}");
+    duration = start.elapsed().as_secs_f64() * 1_000_000.0;
+    println!("Part 2: {res_2} - {:.0}μs", duration);
 }

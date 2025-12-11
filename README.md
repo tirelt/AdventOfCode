@@ -1,6 +1,10 @@
 # Advent Of Code
 
-Solving [Advent Of Code](https://adventofcode.com/2023/) problems in C++.
+Solving [Advent Of Code](https://adventofcode.com/2023/)
+
+2022-2024 => C++
+
+2025 => Rust
 
 # Usage
 

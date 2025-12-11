@@ -81,7 +81,7 @@ fn main() {
             problem = problem.with(expr.eq(joltage[i]));
         }
         let solution = problem.solve().unwrap();
-        let values: Vec<f64> = x.into_iter().map(|x| solution.value(x)).collect();
+        //let values: Vec<f64> = x.into_iter().map(|x| solution.value(x)).collect();
         let min_val: f64 = solution.eval(obj);
         res_2 += min_val;
 

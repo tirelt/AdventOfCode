@@ -51,7 +51,7 @@ fn main() {
                 i += 1;
             }
             let capa = l * w;
-            if capa > max {
+            if capa >= max {
                 res_1 += 1;
             }
             if capa < max && capa > min {
